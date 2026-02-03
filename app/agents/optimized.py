@@ -7,10 +7,15 @@ Rate Limits: RPM-30, RPD-1K, TPM-12K, TPD-100K
 
 import json
 import logging
+import random
 from typing import Dict, List, Optional
 
 from app.core.llm import GroqClient
 from app.agents.personas import PersonaManager
+from app.agents.enhanced_personas import ENHANCED_PERSONAS, get_persona
+from app.agents.response_variation import ResponseVariationEngine
+from app.agents.natural_flow import get_stage_guidance
+from app.agents.context_aware import get_concise_context
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +36,7 @@ class OptimizedAgent:
     def __init__(self, llm_client: GroqClient):
         self.llm = llm_client
         self.persona_manager = PersonaManager()
+        self.variation_engine = ResponseVariationEngine()
     
     async def process_message(
         self,
@@ -50,14 +56,21 @@ class OptimizedAgent:
         Returns:
             Dict with: is_scam, scam_type, confidence, intelligence, response
         """
-        # Get persona (use existing or select based on quick keyword check)
-        persona = session.get("persona")
-        if not persona:
+        session_id = session.get("session_id", "unknown")
+        
+        # Get persona (use existing or select enhanced persona)
+        persona_name = session.get("persona")
+        if not persona_name:
             # Quick keyword-based scam type detection for persona selection
             scam_type = self._quick_scam_type(scammer_message)
-            persona = self.persona_manager.select_persona(scam_type, "medium")
+            persona_name = self._select_enhanced_persona(scam_type)
         
-        persona_prompt = self.persona_manager.get_persona_prompt(persona)
+        # Use enhanced persona for prompt if available
+        if persona_name in ENHANCED_PERSONAS:
+            enhanced_persona = get_persona(persona_name)
+            persona_prompt = enhanced_persona.get("enhanced_system_prompt", "")[:300]
+        else:
+            persona_prompt = self.persona_manager.get_persona_prompt(persona_name)
         
         # Build conversation context (last 3 messages only to save tokens)
         history = session.get("conversation_history", [])[-3:]
@@ -65,40 +78,55 @@ class OptimizedAgent:
         
         # Determine stage from message count
         msg_count = session.get("message_count", 0)
-        stage_tactic = self._get_stage_tactic(msg_count)
+        stage_tactic = get_stage_guidance(msg_count)
+        context_hint = get_concise_context(session, msg_count)
         
-        # Combined prompt - detection + extraction + response in ONE
+        # Combined prompt - detection + extraction + response with human-like guidance
         prompt = f"""Analyze and respond. Output ONLY valid JSON.
 
-                MSG: "{scammer_message}"
-                HISTORY: {history_text}
-                PERSONA: {persona_prompt[:200]}
-                TACTIC: {stage_tactic}
+MSG: "{scammer_message}"
+HISTORY: {history_text}
+PERSONA: {persona_prompt[:300]}
+TACTIC: {stage_tactic}
+{context_hint}
 
-                JSON output:
-                {{"is_scam":true/false,"confidence":0.0-1.0,"scam_type":"bank_fraud|upi_fraud|phishing|job_scam|lottery|investment|tech_support|other","intel":{{"bank_accounts":[],"upi_ids":[],"phone_numbers":[],"links":[]}},"response":"victim reply 1-2 sentences"}}
+JSON output:
+{{"is_scam":true/false,"confidence":0.0-1.0,"scam_type":"bank_fraud|upi_fraud|phishing|job_scam|lottery|investment|tech_support|other","intel":{{"bank_accounts":[],"upi_ids":[],"phone_numbers":[],"links":[]}},"response":"victim reply 1-2 sentences"}}
 
-                SCAM SIGNS: urgency, threats, payment requests, OTP/KYC, prizes, job offers
-                EXTRACT: UPI IDs (x@bank), phones (10 digits), links (http), accounts (12+ digits)
-                RESPONSE RULES: Stay in persona, keep scammer engaged, ask for their payment details"""
+SCAM SIGNS: urgency, threats, payment requests, OTP/KYC, prizes, job offers
+EXTRACT: UPI IDs (x@bank), phones (10 digits), links (http), accounts (12+ digits)
+RESPONSE RULES:
+- Sound like a REAL person, not an AI
+- Use persona-appropriate language and imperfections
+- Vary response style from previous messages
+- Keep scammer engaged, extract their payment details"""
 
         try:
             response = await self.llm.generate_json(prompt=prompt, max_tokens=250)
             result = json.loads(response)
             
             # Validate and normalize
-            result = self._normalize_result(result, persona)
+            result = self._normalize_result(result, persona_name)
+            
+            # Apply humanization if using enhanced persona
+            if persona_name in ENHANCED_PERSONAS and result.get("response"):
+                result["response"] = self.variation_engine.humanize_response(
+                    base_response=result["response"],
+                    persona_name=persona_name,
+                    session_id=session_id,
+                    message_number=msg_count
+                )
             
             logger.info(
                 f"Combined result: scam={result['is_scam']}, "
-                f"type={result['scam_type']}, intel_count={self._count_intel(result['intel'])}"
+                f"type={result['scam_type']}, persona={persona_name}, intel_count={self._count_intel(result['intel'])}"
             )
             
             return result
             
         except Exception as e:
             logger.warning(f"Combined processing failed: {e}")
-            return self._fallback_response(scammer_message, persona, msg_count)
+            return self._fallback_response(scammer_message, persona_name, msg_count)
     
     def _quick_scam_type(self, message: str) -> str:
         """Quick keyword-based scam type detection (no LLM)."""
@@ -119,6 +147,22 @@ class OptimizedAgent:
         elif any(kw in msg_lower for kw in ["virus", "microsoft", "hacked"]):
             return "tech_support"
         return "other"
+    
+    def _select_enhanced_persona(self, scam_type: str) -> str:
+        """Select appropriate enhanced persona based on scam type."""
+        persona_mapping = {
+            "bank_fraud": ["elderly_confused", "tech_naive_parent"],
+            "upi_fraud": ["elderly_confused", "tech_naive_parent", "busy_professional"],
+            "phishing": ["elderly_confused", "curious_student", "tech_naive_parent"],
+            "job_scam": ["desperate_job_seeker", "curious_student"],
+            "lottery": ["elderly_confused", "curious_student"],
+            "investment": ["busy_professional", "curious_student"],
+            "tech_support": ["elderly_confused", "tech_naive_parent"],
+            "other": ["tech_naive_parent", "curious_student"]
+        }
+        
+        candidates = persona_mapping.get(scam_type, ["tech_naive_parent"])
+        return random.choice(candidates)
     
     def _format_history(self, history: List[Dict]) -> str:
         """Format history concisely."""
@@ -191,13 +235,13 @@ class OptimizedAgent:
         
         # Fallback responses by stage
         if msg_count <= 2:
-            response = "What happened? Why is my account blocked?"
+            response = "What happened Why is my account blocked?"
         elif msg_count <= 5:
-            response = "I see, that's serious. What do I need to do?"
+            response = "I see that its serious. What should I do?"
         elif msg_count <= 8:
-            response = "Before I do anything, can you verify who you are?"
+            response = "Before I do anything can you verify who you are?"
         elif msg_count <= 12:
-            response = "Okay, I'll do it. Where should I send the payment?"
+            response = "Okay I'll do it. Where should I send the payment?"
         else:
             response = "The link isn't working. Can you send it again?"
         
