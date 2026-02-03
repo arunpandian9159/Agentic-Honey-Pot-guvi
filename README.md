@@ -17,6 +17,43 @@ An AI-powered honeypot system that autonomously detects scam messages, engages s
 - **Deployment**: Railway
 - **Session Storage**: In-memory (suitable for hackathon)
 
+## What Makes My Honeypot Unique
+
+After implementing Phase 2, you'll have:
+
+### Human-Like Responses
+
+- Not robotic or repetitive
+- Natural variation and imperfections
+- Emotional progression
+- Persona-appropriate language
+
+### Advanced Detection
+
+- Same scam detection as others
+- But better engagement keeps scammers talking longer
+- More intelligence extracted per conversation
+
+### Difficult to Detect
+
+- Scammers can't tell it's a honeypot
+- Passes as real victim
+- No obvious AI patterns
+
+### Production Ready
+
+- Deployed on Railway
+- Handles concurrent sessions
+- Proper error handling
+- GUVI callback integration
+
+### Continuously Improving (with Phase 3)
+
+- Learns from each conversation
+- Gets better over time
+- Analytics on what works
+- Self-optimizing
+
 ## Quick Start
 
 ### 1. Clone and Setup
