@@ -65,31 +65,66 @@
             </div>
           </div>
           <div class="chat-container">
+            <!-- New Message Indicator -->
+            <div
+              class="new-message-indicator"
+              id="newMessageIndicator"
+              onclick="scrollToBottom()"
+            >
+              ⬇ New message
+            </div>
+
             <div class="chat-messages" id="chatMessages">
-              <div class="message system">
-                <div class="message-text">
-                  Start a new conversation. Enter a scam message to test the
-                  honeypot.
+              <div class="message-wrapper system">
+                <div class="message-avatar system">📢</div>
+                <div class="message system">
+                  <div class="message-text">
+                    Start a new conversation. Enter a scam message to test the
+                    honeypot.
+                  </div>
                 </div>
               </div>
             </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+              <div class="typing-avatar">🤖</div>
+              <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+              </div>
+            </div>
+
             <div class="chat-input-container">
-              <div class="input-row">
-                <input
-                  type="text"
-                  class="chat-input"
-                  id="messageInput"
-                  placeholder="Type a scammer's message..."
-                  onkeydown="if (event.key === 'Enter') sendMessage();"
-                />
-                <button
-                  class="btn btn-primary btn-icon"
-                  onclick="sendMessage()"
-                  id="sendBtn"
-                >
-                  <span id="sendIcon">➤</span>
-                  <div class="loading" id="sendLoading"></div>
-                </button>
+              <div class="input-wrapper">
+                <div class="input-row">
+                  <textarea
+                    class="chat-input"
+                    id="messageInput"
+                    placeholder="Type a scammer's message..."
+                    rows="1"
+                    onkeydown="handleInputKeydown(event)"
+                    oninput="
+                      autoResizeTextarea(this);
+                      updateCharCounter();
+                    "
+                  ></textarea>
+                  <span class="char-counter" id="charCounter">0/500</span>
+                  <button
+                    class="btn-send"
+                    onclick="sendMessage()"
+                    id="sendBtn"
+                    title="Send message"
+                  >
+                    <span class="send-icon" id="sendIcon">➤</span>
+                    <div
+                      class="loading"
+                      id="sendLoading"
+                      style="display: none"
+                    ></div>
+                  </button>
+                </div>
               </div>
               <div class="quick-actions">
                 <button
@@ -126,7 +161,8 @@
                   type="text"
                   class="config-input"
                   id="apiUrl"
-                  value="http://localhost:8000"
+                  value=""
+                  placeholder="Leave empty for current origin"
                   onchange="saveConfig()"
                 />
               </div>

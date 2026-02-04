@@ -11,6 +11,8 @@ let intelligence = {
   suspicious_keywords: [],
 };
 let scamInfo = null;
+let isUserScrolledUp = false;
+const MAX_CHAR_COUNT = 500;
 
 // ========================================
 // Initialization
@@ -19,14 +21,18 @@ document.addEventListener("DOMContentLoaded", () => {
   loadConfig();
   updateSessionDisplay();
   checkHealth();
-  setInterval(refreshMetrics, 30000); // Refresh every 30s
+  setInterval(refreshMetrics, 30000);
+  setupScrollObserver();
+  updateCharCounter();
 });
 
 // ========================================
 // API Functions
 // ========================================
 function getApiUrl() {
-  return document.getElementById("apiUrl").value.trim().replace(/\/$/, "");
+  const url = document.getElementById("apiUrl").value.trim().replace(/\/$/, "");
+  // If empty, use the current origin (works for both local and deployed)
+  return url || window.location.origin;
 }
 
 function getApiKey() {
@@ -112,6 +118,11 @@ async function sendMessage() {
   const sender = document.getElementById("senderType").value;
   addMessage(text, sender);
   input.value = "";
+  autoResizeTextarea(input);
+  updateCharCounter();
+
+  // Show typing indicator
+  showTypingIndicator();
 
   // Build request
   const timestamp = Date.now();
@@ -146,6 +157,9 @@ async function sendMessage() {
 
     const data = await response.json();
 
+    // Hide typing indicator
+    hideTypingIndicator();
+
     if (data.reply) {
       addMessage(data.reply, "user");
       conversationHistory.push({
@@ -158,6 +172,7 @@ async function sendMessage() {
     // Refresh metrics after each message
     refreshMetrics();
   } catch (error) {
+    hideTypingIndicator();
     addMessage(`Error: ${error.message}`, "system");
     showToast(`Failed to send message: ${error.message}`, "error");
   } finally {
@@ -172,23 +187,51 @@ async function sendMessage() {
 // ========================================
 function addMessage(text, sender) {
   const container = document.getElementById("chatMessages");
-  const messageDiv = document.createElement("div");
-  messageDiv.className = `message ${sender}`;
+  const wrapper = document.createElement("div");
+  wrapper.className = `message-wrapper ${sender}`;
+
+  const avatarEmoji =
+    sender === "scammer" ? "⚠️" : sender === "user" ? "🤖" : "📢";
 
   const senderLabel =
     sender === "scammer"
-      ? "⚠️ Scammer"
+      ? "Scammer"
       : sender === "user"
-        ? "🤖 Honeypot"
-        : "📢 System";
+        ? "Honeypot AI"
+        : "System";
 
-  messageDiv.innerHTML = `
+  const timestamp = formatTimestamp(new Date());
+  const readStatus =
+    sender === "scammer" ? "delivered" : sender === "user" ? "read" : "";
+
+  wrapper.innerHTML = `
+    <div class="message-avatar ${sender}">${avatarEmoji}</div>
+    <div class="message ${sender}">
+      ${
+        sender !== "system"
+          ? `
+        <div class="message-header">
           <div class="message-sender">${senderLabel}</div>
-          <div class="message-text">${escapeHtml(text)}</div>
-      `;
+          <div class="message-timestamp">${timestamp}</div>
+        </div>
+      `
+          : ""
+      }
+      <div class="message-text">${escapeHtml(text)}</div>
+      ${
+        readStatus
+          ? `
+        <div class="message-footer">
+          <span class="read-indicator ${readStatus}">${readStatus === "read" ? "✓✓" : "✓"}</span>
+        </div>
+      `
+          : ""
+      }
+    </div>
+  `;
 
-  container.appendChild(messageDiv);
-  container.scrollTop = container.scrollHeight;
+  container.appendChild(wrapper);
+  smartScroll();
 }
 
 function updateIntelligence(intel) {
@@ -249,14 +292,19 @@ function resetSession() {
     suspicious_keywords: [],
   };
   scamInfo = null;
+  isUserScrolledUp = false;
 
   // Reset UI
   document.getElementById("chatMessages").innerHTML = `
-          <div class="message system">
-              <div class="message-text">New session started. Enter a scam message to test the honeypot.</div>
-          </div>
-      `;
+    <div class="message-wrapper system">
+      <div class="message-avatar system">📢</div>
+      <div class="message system">
+        <div class="message-text">New session started. Enter a scam message to test the honeypot.</div>
+      </div>
+    </div>
+  `;
   document.getElementById("scamAlertPanel").style.display = "none";
+  document.getElementById("newMessageIndicator").classList.remove("visible");
 
   updateIntelSection("bankAccounts", "bankCount", []);
   updateIntelSection("upiIds", "upiCount", []);
@@ -281,8 +329,11 @@ function insertQuickMessage(type) {
     kyc: "Your Paytm KYC is incomplete. Complete verification within 24 hours to avoid account suspension. Visit paytm-kyc-verify.in or transfer ₹1 to verify@paytm",
   };
 
-  document.getElementById("messageInput").value = messages[type] || "";
-  document.getElementById("messageInput").focus();
+  const input = document.getElementById("messageInput");
+  input.value = messages[type] || "";
+  input.focus();
+  autoResizeTextarea(input);
+  updateCharCounter();
 }
 
 // ========================================
@@ -303,7 +354,19 @@ function loadConfig() {
   const savedUrl = localStorage.getItem("honeypot_api_url");
   const savedKey = localStorage.getItem("honeypot_api_key");
 
-  if (savedUrl) document.getElementById("apiUrl").value = savedUrl;
+  // Only load saved URL if it's not a localhost URL on a deployed site
+  // This prevents issues when the app is deployed but has cached localhost values
+  if (savedUrl) {
+    const isLocalhost =
+      savedUrl.includes("localhost") || savedUrl.includes("127.0.0.1");
+    const isDeployed =
+      !window.location.hostname.includes("localhost") &&
+      !window.location.hostname.includes("127.0.0.1");
+
+    if (!(isLocalhost && isDeployed)) {
+      document.getElementById("apiUrl").value = savedUrl;
+    }
+  }
   if (savedKey) document.getElementById("apiKey").value = savedKey;
 }
 
@@ -339,4 +402,124 @@ function showToast(message, type = "success") {
     toast.style.animation = "toast-in 0.3s ease reverse";
     setTimeout(() => toast.remove(), 300);
   }, 4000);
+}
+
+// ========================================
+// Enhanced Chat UX Functions
+// ========================================
+
+// Typing indicator
+function showTypingIndicator() {
+  const indicator = document.getElementById("typingIndicator");
+  indicator.classList.add("visible");
+  smartScroll();
+}
+
+function hideTypingIndicator() {
+  const indicator = document.getElementById("typingIndicator");
+  indicator.classList.remove("visible");
+}
+
+// Auto-resize textarea
+function autoResizeTextarea(textarea) {
+  textarea.style.height = "auto";
+  const newHeight = Math.min(textarea.scrollHeight, 150);
+  textarea.style.height = newHeight + "px";
+}
+
+// Handle textarea keydown (Enter to send, Shift+Enter for new line)
+function handleInputKeydown(event) {
+  if (event.key === "Enter") {
+    if (event.shiftKey) {
+      // Shift+Enter: allow default behavior (new line)
+      return;
+    } else {
+      // Enter only: send message
+      event.preventDefault();
+      sendMessage();
+    }
+  }
+}
+
+// Character counter
+function updateCharCounter() {
+  const input = document.getElementById("messageInput");
+  const counter = document.getElementById("charCounter");
+  const count = input.value.length;
+
+  counter.textContent = `${count}/${MAX_CHAR_COUNT}`;
+
+  counter.classList.remove("warning", "error");
+  if (count > MAX_CHAR_COUNT * 0.9) {
+    counter.classList.add("error");
+  } else if (count > MAX_CHAR_COUNT * 0.7) {
+    counter.classList.add("warning");
+  }
+}
+
+// Scroll observer for new message indicator
+function setupScrollObserver() {
+  const container = document.getElementById("chatMessages");
+
+  container.addEventListener("scroll", () => {
+    const isAtBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      50;
+    isUserScrolledUp = !isAtBottom;
+
+    if (isAtBottom) {
+      document
+        .getElementById("newMessageIndicator")
+        .classList.remove("visible");
+    }
+  });
+}
+
+// Smart scroll - auto scroll if at bottom, show indicator if scrolled up
+function smartScroll() {
+  const container = document.getElementById("chatMessages");
+
+  if (!isUserScrolledUp) {
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth",
+    });
+  } else {
+    document.getElementById("newMessageIndicator").classList.add("visible");
+  }
+}
+
+// Scroll to bottom when clicking indicator
+function scrollToBottom() {
+  const container = document.getElementById("chatMessages");
+  isUserScrolledUp = false;
+  document.getElementById("newMessageIndicator").classList.remove("visible");
+  container.scrollTo({
+    top: container.scrollHeight,
+    behavior: "smooth",
+  });
+}
+
+// Format timestamp for messages
+function formatTimestamp(date) {
+  const now = new Date();
+  const diff = now - date;
+
+  // If less than a minute ago
+  if (diff < 60000) {
+    return "Just now";
+  }
+
+  // If today, show time
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // Otherwise show date and time
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
