@@ -24,14 +24,14 @@ class Settings(BaseSettings):
     
     # Optional with defaults
     PORT: int = int(os.getenv("PORT", "8000"))
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "production")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     
     # Session settings
     SESSION_TIMEOUT_MINUTES: int = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
-    MAX_MESSAGES_PER_SESSION: int = int(os.getenv("MAX_MESSAGES_PER_SESSION", "15"))
-    INTELLIGENCE_SCORE_THRESHOLD: float = float(os.getenv("INTELLIGENCE_SCORE_THRESHOLD", "8"))
+    MAX_MESSAGES_PER_SESSION: int = int(os.getenv("MAX_MESSAGES_PER_SESSION", "12"))
+    INTELLIGENCE_SCORE_THRESHOLD: float = float(os.getenv("INTELLIGENCE_SCORE_THRESHOLD", "6"))
     
     # LLM settings
     LLM_MODEL: str = "llama-3.3-70b-versatile"

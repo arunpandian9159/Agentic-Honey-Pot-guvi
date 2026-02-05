@@ -156,7 +156,7 @@ async function sendMessage() {
     }
 
     const data = await response.json();
-
+    
     // Hide typing indicator
     hideTypingIndicator();
 
@@ -170,8 +170,18 @@ async function sendMessage() {
     }
 
     // Update intelligence panel with extracted data
-    if (data.intelligence) {
-      updateIntelligence(data.intelligence);
+    // Fetch intelligence from separate endpoint (chat response is status+reply only per requirements)
+    try {
+      const intelRes = await fetch(
+        `${getApiUrl()}/api/intelligence?sessionId=${encodeURIComponent(sessionId)}`,
+        { headers: getApiKey() ? { "x-api-key": getApiKey() } : {} }
+      );
+      if (intelRes.ok) {
+        const intelData = await intelRes.json();
+        if (intelData.intelligence) updateIntelligence(intelData.intelligence);
+      }
+    } catch (e) {
+      console.log("Intelligence fetch failed:", e);
     }
 
     // Refresh metrics after each message
