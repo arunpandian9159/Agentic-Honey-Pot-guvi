@@ -128,23 +128,25 @@ async def chat_endpoint(
             intel_score >= settings.INTELLIGENCE_SCORE_THRESHOLD
         )
         
-        if should_end and session["scam_detected"]:
+        if should_end and session["scam_detected"] and not session.get("callback_sent"):
             agent_notes = guvi_callback.build_agent_notes(
                 scam_type=session.get("scam_type", "unknown"),
                 persona=session.get("persona", "unknown"),
                 confidence=session.get("scam_confidence", 0.0),
                 intel_score=intel_score
             )
-            
+            total_messages_exchanged = len(session["conversation_history"])
+
             callback_success = await guvi_callback.send_final_result(
                 session_id=request.sessionId,
                 scam_detected=True,
-                total_messages=session["message_count"],
+                total_messages=total_messages_exchanged,
                 intelligence=session["intelligence"],
                 agent_notes=agent_notes
             )
-            
+
             if callback_success:
+                session["callback_sent"] = True
                 logger.info(f"Session {request.sessionId} completed. Callback sent.")
                 metrics["total_intelligence"] += sum(
                     len(v) for v in session["intelligence"].values()

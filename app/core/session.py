@@ -36,6 +36,7 @@ class SessionManager:
                 "suspicious_keywords": []
             },
             "message_count": 0,
+            "callback_sent": False,
             "created_at": datetime.now(),
             "last_activity": datetime.now()
         }

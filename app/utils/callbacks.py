@@ -58,7 +58,7 @@ class GUVICallback:
         logger.debug(f"Callback payload: {payload}")
         
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.post(
                     self.callback_url,
                     json=payload,
