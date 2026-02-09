@@ -31,6 +31,7 @@ from app.agents.conversation import (
     ensure_sentence_complete,
     AI_PATTERNS,
 )
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +200,7 @@ class EnhancedConversationManager:
         )
 
         try:
-            response_text = await self.llm.generate_json(prompt=prompt, max_tokens=200)
+            response_text = await self.llm.generate_json(prompt=prompt, max_tokens=settings.MAX_TOKENS_JSON)
             result = json.loads(response_text)
             result = self._normalize_result(result, persona_name)
 
@@ -410,7 +411,7 @@ RESPONSE RULES:
         ) + "\nEnsure the reply is a complete sentence ending with . ! or ?"
 
         try:
-            txt = await self.llm.generate(prompt=prompt, temperature=0.5, max_tokens=200)
+            txt = await self.llm.generate(prompt=prompt, temperature=0.5, max_tokens=settings.MAX_TOKENS_GENERATION)
             return txt.strip()
         except Exception:
             return _get_contextual_fallback(persona, scammer_message, msg_count)
@@ -427,7 +428,7 @@ RESPONSE RULES:
         ) + "\nVary wording from previous messages. End with proper punctuation."
 
         try:
-            txt = await self.llm.generate(prompt=prompt, temperature=0.6, max_tokens=200)
+            txt = await self.llm.generate(prompt=prompt, temperature=0.6, max_tokens=settings.MAX_TOKENS_GENERATION)
             return txt.strip()
         except Exception:
             return _get_contextual_fallback(persona, scammer_message, msg_count)

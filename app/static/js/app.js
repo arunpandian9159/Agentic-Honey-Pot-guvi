@@ -224,7 +224,7 @@ function addMessage(text, sender) {
   wrapper.className = `message-wrapper ${sender}`;
 
   const avatarEmoji =
-    sender === "scammer" ? "<i class=\"fa-solid fa-triangle-exclamation\" style=\"color: #ef4444;\"></i>" : sender === "user" ? "<i class=\"fa-solid fa-robot\" style=\"color: #10b981;\"></i>" : "<i class=\"fa-solid fa-bullhorn\" style=\"color: #8b5cf6;\"></i>";
+    sender === "scammer" ? "<i class=\"fa-solid fa-triangle-exclamation\" style=\"color: #fcd115;\"></i>" : sender === "user" ? "<i class=\"fa-solid fa-robot\" style=\"color: #ffffff;\"></i>" : "<i class=\"fa-solid fa-bullhorn\" style=\"color: #8b5cf6;\"></i>";
 
   const senderLabel =
     sender === "scammer"

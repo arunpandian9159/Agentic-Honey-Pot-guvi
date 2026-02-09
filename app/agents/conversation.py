@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.core.llm import GroqClient
 
 from app.agents.personas import PersonaManager
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +196,7 @@ Generate ONLY the victim's reply. No explanations, no quotes around the response
             response = await self.llm.generate(
                 prompt=full_prompt,
                 temperature=0.7,
-                max_tokens=200
+                max_tokens=settings.MAX_TOKENS_GENERATION
             )
 
             response = self._clean_response(response)

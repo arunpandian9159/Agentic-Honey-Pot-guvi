@@ -12,6 +12,7 @@ import re
 from typing import Dict, List, Optional
 
 from app.core.llm import GroqClient
+from app.core.config import settings
 from app.agents.personas import PersonaManager
 from app.agents.enhanced_personas import ENHANCED_PERSONAS, get_persona
 from app.agents.response_variation import ResponseVariationEngine
@@ -125,7 +126,7 @@ RESPONSE RULES:
 - Keep scammer engaged, extract their payment details"""
 
         try:
-            response = await self.llm.generate_json(prompt=prompt, max_tokens=250)
+            response = await self.llm.generate_json(prompt=prompt, max_tokens=settings.MAX_TOKENS_JSON)
             result = json.loads(response)
 
             # Validate and normalize
