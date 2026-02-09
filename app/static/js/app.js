@@ -357,7 +357,7 @@ function insertQuickMessage(type) {
   const messages = {
     lottery:
       "Congratulations! You've won ₹50,00,000 in our Lucky Draw! Send ₹2,500 processing fee to claim. Contact: 9876543210 or pay at lottery.claim-now.tk",
-    bank: "Dear customer, your SBI account is blocked due to KYC expiry. Update immediately at sbi-kyc-update.com or call 1800-xxx-xxxx. Ignore to lose access.",
+    bank: "Dear customer, your SBI account is blocked due to KYC expiry. Update immediately at sbi-kyc-update.com or call 8203549852. Ignore to lose access.",
     job: "Hi! Work from home opportunity! Earn ₹15,000/day. No experience needed. Pay ₹500 registration fee to join. UPI: job.recruiter@ybl",
     kyc: "Your Paytm KYC is incomplete. Complete verification within 24 hours to avoid account suspension. Visit paytm-kyc-verify.in or transfer ₹1 to verify@paytm",
   };
