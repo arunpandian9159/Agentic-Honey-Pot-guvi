@@ -50,7 +50,7 @@ async function checkHealth() {
 
     if (response.ok) {
       const data = await response.json();
-      healthEl.textContent = "✓ Healthy";
+      healthEl.textContent = "Healthy";
       healthEl.className = "status-value healthy";
       statusCard.classList.remove("warning");
       document.getElementById("activeSessions").textContent =
@@ -61,7 +61,7 @@ async function checkHealth() {
       throw new Error(`HTTP ${response.status}`);
     }
   } catch (error) {
-    healthEl.textContent = "✗ Offline";
+    healthEl.textContent = "Offline";
     healthEl.className = "status-value error";
     statusCard.classList.add("warning");
     showToast(`Connection failed: ${error.message}`, "error");
@@ -224,7 +224,7 @@ function addMessage(text, sender) {
   wrapper.className = `message-wrapper ${sender}`;
 
   const avatarEmoji =
-    sender === "scammer" ? "⚠️" : sender === "user" ? "🤖" : "📢";
+    sender === "scammer" ? "<i class=\"fa-solid fa-triangle-exclamation\" style=\"color: #ef4444;\"></i>" : sender === "user" ? "<i class=\"fa-solid fa-robot\" style=\"color: #10b981;\"></i>" : "<i class=\"fa-solid fa-bullhorn\" style=\"color: #8b5cf6;\"></i>";
 
   const senderLabel =
     sender === "scammer"
@@ -255,7 +255,7 @@ function addMessage(text, sender) {
         readStatus
           ? `
         <div class="message-footer">
-          <span class="read-indicator ${readStatus}">${readStatus === "read" ? "✓✓" : "✓"}</span>
+          <span class="read-indicator ${readStatus}">${readStatus === "read" ? "<i class=\"fa-solid fa-check-double\" style=\"color: #3b82f6;\"></i>" : "<i class=\"fa-solid fa-check\" style=\"color: #6b7280;\"></i>"}</span>
         </div>
       `
           : ""
@@ -330,7 +330,7 @@ function resetSession() {
   // Reset UI
   document.getElementById("chatMessages").innerHTML = `
     <div class="message-wrapper system">
-      <div class="message-avatar system">📢</div>
+      <div class="message-avatar system"><i class="fa-solid fa-bullhorn" style="color: #8b5cf6;"></i></div>
       <div class="message system">
         <div class="message-text">New session started. Enter a scam message to test the honeypot.</div>
       </div>
@@ -426,7 +426,7 @@ function showToast(message, type = "success") {
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
 
-  const icon = type === "success" ? "✓" : type === "error" ? "✗" : "⚠";
+  const icon = type === "success" ? "<i class=\"fa-solid fa-check\" style=\"color: #10b981;\"></i>" : type === "error" ? "<i class=\"fa-solid fa-xmark\" style=\"color: #ef4444;\"></i>" : "<i class=\"fa-solid fa-exclamation\" style=\"color: #f59e0b;\"></i>";
   toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span><span>${escapeHtml(message)}</span>`;
 
   container.appendChild(toast);
