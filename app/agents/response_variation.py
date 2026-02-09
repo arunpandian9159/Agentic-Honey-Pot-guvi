@@ -71,10 +71,7 @@ class ResponseVariationEngine:
         # Step 4: Vary opening and closing
         response = self._vary_opening_closing(response, persona, message_number)
         
-        # Step 5: Adjust length naturally
-        response = self._adjust_length(response, persona)
-        
-        # Step 6: Add emotional markers
+        # Step 5: Add emotional markers
         response = self._add_emotional_markers(response, persona, message_number)
         
         return response.strip()
@@ -224,51 +221,6 @@ class ResponseVariationEngine:
         
         return text
     
-    MIN_WORDS = 8
-    MIN_CHARS = 35
-
-    def _adjust_length(self, text: str, persona: Dict) -> str:
-        """Adjust response length based on persona distribution."""
-        length_dist = persona.get("message_length_distribution", {})
-        words = text.split()
-        word_count = len(words)
-
-        # Don't prune short responses
-        if word_count <= self.MIN_WORDS or len(text) <= self.MIN_CHARS:
-            return text
-
-        # Determine target category from distribution
-        rand = random.random()
-        cumulative = 0
-        target_category = "medium"
-        for category, probability in length_dist.items():
-            cumulative += probability
-            if rand < cumulative:
-                target_category = category
-                break
-
-        # Prune based on target category
-        if target_category == "very_short" and word_count > 10:
-            return self._prune_to_short(words, word_count, text)
-        elif target_category == "short" and word_count > 12:
-            sentences = re.split(r'(?<=[.!?])\s+', text)
-            if len(sentences) > 1:
-                return sentences[0]
-            return self._prune_to_short(words, word_count, text)
-        elif target_category == "long" and word_count < 15:
-            fillers = persona.get("vocabulary", {}).get("filler_phrases", [])
-            if fillers:
-                return text + f" {random.choice(fillers)}"
-
-        return text
-
-    def _prune_to_short(self, words: List[str], word_count: int, text: str) -> str:
-        """Prune text to a shorter length."""
-        n = random.randint(self.MIN_WORDS, min(10, word_count))
-        shortened = " ".join(words[:n]).strip()
-        if shortened and shortened[-1] not in ".!?,":
-            shortened += "?" if any(q in shortened.lower() for q in ["what", "why", "how", "can"]) else "."
-        return shortened
     
     def _add_emotional_markers(
         self,
