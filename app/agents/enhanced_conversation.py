@@ -202,7 +202,7 @@ class EnhancedConversationManager:
         try:
             response_text = await self.llm.generate_json(prompt=prompt, max_tokens=settings.MAX_TOKENS_JSON)
             result = json.loads(response_text)
-            result = self._normalize_result(result, persona_name)
+            result = self._normalize_result(result, persona_name, scammer_message)
 
             raw_response = result.get("response", "").strip().strip('"').strip("'")
             logger.info(f"Raw LLM output: '{raw_response}'")
@@ -298,13 +298,14 @@ MESSAGE NUMBER: {message_number}
 STAGE TACTIC: {stage_guidance}
 
 OUTPUT FORMAT - Respond with ONLY valid JSON:
-{{"is_scam":true/false,"confidence":0.0-1.0,"scam_type":"bank_fraud|upi_fraud|phishing|job_scam|lottery|investment|tech_support|other","intel":{{"bank_accounts":[],"upi_ids":[],"phone_numbers":[],"links":[]}},"response":"victim reply 1-2 sentences"}}
+{{"is_scam":true/false,"confidence":0.0-1.0,"scam_type":"bank_fraud|upi_fraud|phishing|job_scam|lottery|investment|tech_support|other","intel":{{"bank_accounts":[],"upi_ids":[],"phone_numbers":[],"phishing_links":[],"suspicious_keywords":[]}},"response":"victim reply 1-2 sentences"}}
 
 EXTRACTION RULES:
 - UPI IDs: x@bank format
 - Phone numbers: 10 digits starting with 6-9
 - Bank accounts: 12+ digit numbers
 - Links: any http/https URLs
+- Suspicious keywords: urgent, verify, blocked, prize, otp, kyc, etc.
 
 RESPONSE RULES:
 - Sound like a REAL PERSON, not an AI
@@ -317,7 +318,7 @@ RESPONSE RULES:
         candidates = PERSONA_MAPPING.get(scam_type, ["tech_naive_parent"])
         return random.choice(candidates)
 
-    def _normalize_result(self, result: Dict, persona: str) -> Dict:
+    def _normalize_result(self, result: Dict, persona: str, scammer_message: str = "") -> Dict:
         """Normalize and validate result."""
         result.setdefault("is_scam", True)
         result.setdefault("confidence", 0.7)
@@ -334,6 +335,12 @@ RESPONSE RULES:
 
         if "phishing_links" not in intel and "links" in intel:
             intel["phishing_links"] = intel.pop("links")
+
+        # Enhance with regex-based keyword extraction if not already populated
+        if scammer_message and not intel.get("suspicious_keywords"):
+            msg_lower = scammer_message.lower()
+            keywords = [kw for kw in SCAM_KEYWORDS if kw in msg_lower]
+            intel["suspicious_keywords"] = keywords[:5]  # Limit to 5 keywords
 
         result["persona"] = persona
         return result

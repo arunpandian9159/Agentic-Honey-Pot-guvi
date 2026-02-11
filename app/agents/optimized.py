@@ -115,10 +115,10 @@ TACTIC: {stage_tactic}
 {context_hint}
 
 JSON output:
-{{"is_scam":true/false,"confidence":0.0-1.0,"scam_type":"bank_fraud|upi_fraud|phishing|job_scam|lottery|investment|tech_support|other","intel":{{"bank_accounts":[],"upi_ids":[],"phone_numbers":[],"links":[]}},"response":"victim reply 1-2 sentences"}}
+{{"is_scam":true/false,"confidence":0.0-1.0,"scam_type":"bank_fraud|upi_fraud|phishing|job_scam|lottery|investment|tech_support|other","intel":{{"bank_accounts":[],"upi_ids":[],"phone_numbers":[],"phishing_links":[],"suspicious_keywords":[]}},"response":"victim reply 1-2 sentences"}}
 
 SCAM SIGNS: urgency, threats, payment requests, OTP/KYC, prizes, job offers
-EXTRACT: UPI IDs (x@bank), phones (10 digits), links (http), accounts (12+ digits)
+EXTRACT: UPI IDs (x@bank), phones (10 digits), links (http), accounts (12+ digits), suspicious keywords (urgent, verify, blocked, prize, otp, kyc, etc.)
 RESPONSE RULES:
 - Sound like a REAL person, not an AI
 - Use persona-appropriate language and imperfections
@@ -130,7 +130,7 @@ RESPONSE RULES:
             result = json.loads(response)
 
             # Validate and normalize
-            result = self._normalize_result(result, persona_name, msg_count)
+            result = self._normalize_result(result, persona_name, msg_count, scammer_message)
 
             # Apply humanization if using enhanced persona
             if persona_name in ENHANCED_PERSONAS and result.get("response"):
@@ -159,7 +159,7 @@ RESPONSE RULES:
             logger.warning(f"Combined processing failed: {e}")
             return _fallback_response(scammer_message, persona_name, msg_count)
 
-    def _normalize_result(self, result: Dict, persona: str, msg_count: int = 0) -> Dict:
+    def _normalize_result(self, result: Dict, persona: str, msg_count: int = 0, scammer_message: str = "") -> Dict:
         """Normalize and validate result. Replace fragment/short responses with fallback."""
         result.setdefault("is_scam", True)
         result.setdefault("confidence", 0.7)
@@ -186,6 +186,12 @@ RESPONSE RULES:
         # Rename for compatibility
         if "phishing_links" not in intel and "links" in intel:
             intel["phishing_links"] = intel.pop("links")
+
+        # Enhance with regex-based keyword extraction if not already populated
+        if scammer_message and not intel.get("suspicious_keywords"):
+            msg_lower = scammer_message.lower()
+            keywords = [kw for kw in SCAM_KEYWORDS if kw in msg_lower]
+            intel["suspicious_keywords"] = keywords[:5]  # Limit to 5 keywords
 
         result["persona"] = persona
         return result
