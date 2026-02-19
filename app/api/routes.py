@@ -208,10 +208,17 @@ async def chat_endpoint(
                 metrics["scams_detected"] += 1
                 logger.info(f"🚨 SCAM type={result['scam_type']} confidence={result['confidence']:.0%}")
 
-            got_new = _merge_intelligence(session, result.get("intel", {}))
-            _record_tactic_outcome(session, got_new)
+        # ALWAYS merge intelligence — don't gate behind scam confidence threshold
+        # This ensures we capture intel even from early/ambiguous messages
+        _merge_intelligence(session, result.get("intel", {}))
+        if result["is_scam"]:
+            _record_tactic_outcome(session, True)
 
-        # 4a. Scan incoming conversationHistory for missed intelligence
+        # 4a. Standalone regex on CURRENT scammer message (safety net if LLM misses items)
+        current_regex_intel = intelligence_extractor._regex_extraction(request.message.text)
+        _merge_intelligence(session, current_regex_intel)
+
+        # 4b. Scan incoming conversationHistory for missed intelligence
         for hist_msg in (request.conversationHistory or []):
             if hist_msg.sender == "scammer":
                 hist_intel = intelligence_extractor._regex_extraction(hist_msg.text)
@@ -335,12 +342,12 @@ async def _send_callback(session_id: str, session: Dict, intel_score: float):
             len(v) for v in session["intelligence"].values()
         )
 
-        # Store conversation in RAG for learning
-        if _rag_agent and hasattr(_rag_agent, 'store_completed_conversation'):
-            try:
-                await _rag_agent.store_completed_conversation(session, intel_score)
-            except Exception as rag_err:
-                logger.debug(f"RAG storage failed: {rag_err}")
+        # RAG storage disabled (agent disabled for performance)
+        # if _rag_agent and hasattr(_rag_agent, 'store_completed_conversation'):
+        #     try:
+        #         await _rag_agent.store_completed_conversation(session, intel_score)
+        #     except Exception as rag_err:
+        #         logger.debug(f"RAG storage failed: {rag_err}")
 
 
 @router.get("/api/intelligence")

@@ -96,8 +96,10 @@ class SessionManager:
         """Calculate engagement metrics for scoring."""
         start = session.get("session_start_time", session.get("created_at", datetime.now()))
         duration = (datetime.now() - start).total_seconds()
+        # Count ALL messages (scammer + user) for accurate exchange count
+        total_messages = len(session.get("conversation_history", []))
         return {
-            "totalMessagesExchanged": session.get("message_count", 0),
+            "totalMessagesExchanged": max(total_messages, session.get("message_count", 0)),
             "engagementDurationSeconds": round(duration, 2)
         }
 

@@ -123,9 +123,12 @@ Examples:
         upis = [u for u in upis if not any(d in u.lower() for d in email_domains)]
         llm_result["upi_ids"].extend(upis)
         
-        # URL pattern
-        url_pattern = r'https?://[^\s<>"\']+|www\.[^\s<>"\']+|[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}[/\w\.\-\?\=\&]*'
+        # URL pattern — only match actual URLs, not UPI-like patterns
+        url_pattern = r'https?://[^\s<>"\']+|www\.[^\s<>"\']+' 
         urls = re.findall(url_pattern, message)
+        # Filter out patterns that look like UPI IDs (word@word)
+        upi_set = set(u.lower() for u in llm_result.get("upi_ids", []))
+        urls = [u for u in urls if u.lower() not in upi_set]
         llm_result["phishing_links"].extend(urls)
         
         # Bank account pattern (9-18 digit numbers that aren't phone numbers)

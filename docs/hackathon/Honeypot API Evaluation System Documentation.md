@@ -1,9 +1,1325 @@
+# Honeypot API Evaluation System
+
+# Documentation
+
+## Overview
+
+This document explains how your submitted Honeypot API will be evaluated in the hackathon.
+The evaluation system tests your API's ability to detect scams, extract intelligence, and engage
+with scammers across multiple realistic scenarios.
+
+## Platform Submission Process
+
+### How to Submit Your API
+
+Follow these steps to submit your solution on the hackathon platform:
+
+**Step 1: Navigate to Timeline Page**
+
+```
+● Go to the Timeline page in the hackathon platform
+● Look for the card titled "Final Submission: API Endpoints"
+```
+**Step 2: Wait for Submission Window**
+
+```
+● The Submit button will become active only when the level starts
+● You cannot submit before the designated start time
+● Make sure to complete your submission before the deadline
+```
+**Step 3: Submit Your Details** Once the submission button is active, you will need to provide:
+
+1. **Deployment URL** : Your publicly accessible API endpoint
+    ○ Example: https://your-api.example.com/detect
+    ○ Must be live and accessible from the internet
+2. **API Key** : Your authentication key
+    ○ This is the key your API expects in the x-api-key header
+    ○ Example: abc123xyz
+3. **GitHub URL** : Link to your source code repository
+    ○ Example: https://github.com/username/voice-detection-api
+    ○ Repository must be public or accessible to evaluators
+
+
+**Important Notes** :
+
+```
+● Double-check all URLs before submitting
+● Ensure your API is live and responding correctly
+● Test your endpoint using the self-evaluation tool (provided below)
+● You may have limited submission attempts, so verify everything first
+```
+## Evaluation Process
+
+### 1. Test Scenarios
+
+Your API will be tested against **multiple scam scenarios** covering different fraud types. Each
+scenario has a specific weight that contributes to your final score.
+
+**Example Test Scenarios:**
+
+```
+Scenario Type Weight Description
+```
+```
+Bank Fraud
+Detection
+```
+```
+bank_fr
+aud
+```
+```
+35% Simulates urgent bank account compromise
+with OTP requests
+```
+UPI Fraud Multi-turn (^) upi_fra
+ud
+35% Simulates cashback scam requiring UPI
+verification
+Phishing Link
+Detection
+phishin
+g
+30% Simulates fake product offers with malicious
+links
+**Important Notes:**
+● ⚠ **The actual test scenarios may differ** from the examples shown above
+● ⚠ **Weights are assigned per scenario** and may vary based on the test case
+● ⚠ **Number of scenarios may vary** - your API should handle any scam type generically
+● ⚠ **Do not hardcode responses** based on these example scenarios
+● ✅ **Build a robust, generic scam detection system** that can handle various fraud
+types
+**Scenario Structure:**
+Each scenario includes:
+● **Session ID** : Unique identifier
+
+
+```
+None
+```
+```
+● Initial Message : The first scam message your API receives
+● Metadata : Context information (channel, language, locale)
+● Max Turns : Maximum conversation exchanges (typically up to 10)
+● Fake Data : Pre-planted intelligence your honeypot should extract
+```
+**Why Multiple Scenarios?**
+
+Your honeypot will be evaluated on its ability to:
+
+1. **Detect various scam types** - not just one specific pattern
+2. **Extract intelligence** across different fraud categories
+3. **Maintain realistic engagement** in diverse conversation contexts
+4. **Adapt responses** based on the scam type and conversation flow
+
+### 2. Multi-Turn Conversation Flow
+
+Each scenario involves up to **10 turns** of conversation:
+
+1. **Turn 1** : Your API receives the initial scam message
+2. **Turns 2-10** : Your API responds, and an AI generates realistic scammer follow-ups based
+    on your responses
+3. **End** : You submit a final output with your analysis
+
+**Example Flow**
+
+```
+Turn 1 (Scammer): "URGENT: Your SBI account has been compromised.
+Share OTP immediately."
+↓
+Your API Response: "I'm concerned. Can you verify your identity
+first?"
+↓
+Turn 2 (Scammer): "I'm calling from SBI fraud department. My ID
+is SBI-12345.
+What's your account number?"
+↓
+Your API Response: "What's your phone number so I can call you
+back?"
+↓
+Turn 3 (Scammer): "You can reach me at +91-9876543210. But we
+need to act fast!"
+```
+
+```
+JSON
+```
+#### ↓
+
+```
+... continues up to 10 turns
+```
+### 3. API Request Format
+
+Your endpoint will receive POST requests with this structure:
+
+#### {
+
+```
+"sessionId": "uuid-v4-string",
+"message": {
+"sender": "scammer",
+"text": "URGENT: Your account has been compromised...",
+"timestamp": "2025-02-11T10:30:00Z"
+},
+"conversationHistory": [
 {
-  "version": "2",
-  "formats": {
-    "markdown": {
-      "content": "## Page 1\n\n# Honeypot API Evaluation System Documentation\n\n## Overview\n\nThis document explains how your submitted Honeypot API will be evaluated in the hackathon. The evaluation system tests your API's ability to detect scams, extract intelligence, and engage with scammers across multiple realistic scenarios.\n\n## Platform Submission Process\n\n### How to Submit Your API\n\nFollow these steps to submit your solution on the hackathon platform:\n\n**Step 1: Navigate to Timeline Page**\n\n*   Go to the **Timeline** page in the hackathon platform\n*   Look for the card titled \"Final Submission: API Endpoints\"\n\n**Step 2: Wait for Submission Window**\n\n*   The **Submit** button will become active only when the level starts\n*   You cannot submit before the designated start time\n*   Make sure to complete your submission before the deadline\n\n**Step 3: Submit Your Details** Once the submission button is active, you will need to provide:\n\n1.  **Deployment URL**: Your publicly accessible API endpoint\n    *   Example: `https://your-api.example.com/detect`\n    *   Must be live and accessible from the internet\n2.  **API Key**: Your authentication key\n    *   This is the key your API expects in the x-api-key header\n    *   Example: `abc123xyz789`\n3.  **GitHub URL**: Link to your source code repository\n    *   Example: `https://github.com/username/voice-detection-api`\n    *   Repository must be public or accessible to evaluators\n\n---\n\n\n## Page 2\n\n## Important Notes:\n\n* Double-check all URLs before submitting\n* Ensure your API is live and responding correctly\n* Test your endpoint using the self-evaluation tool (provided below)\n* You may have limited submission attempts, so verify everything first\n\n# Evaluation Process\n\n## 1. Test Scenarios\n\nYour API will be tested against multiple scam scenarios covering different fraud types. Each scenario has a specific weight that contributes to your final score.\n\n### Example Test Scenarios:\n\n<table>\n  <thead>\n    <tr>\n      <th>Scenario</th>\n      <th>Type</th>\n      <th>Weight</th>\n      <th>Description</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Bank Fraud Detection</td>\n      <td>bank_fraud</td>\n      <td>35%</td>\n      <td>Simulates urgent bank account compromise with OTP requests</td>\n    </tr>\n    <tr>\n      <td>UPI Fraud Multi-turn</td>\n      <td>upi_fraud</td>\n      <td>35%</td>\n      <td>Simulates cashback scam requiring UPI verification</td>\n    </tr>\n    <tr>\n      <td>Phishing Link Detection</td>\n      <td>phishing</td>\n      <td>30%</td>\n      <td>Simulates fake product offers with malicious links</td>\n    </tr>\n  </tbody>\n</table>\n\n### Important Notes:\n\n* The actual test scenarios may differ from the examples shown above\n* Weights are assigned per scenario and may vary based on the test case\n* Number of scenarios may vary - your API should handle any scam type generically\n* Do not hardcode responses based on these example scenarios\n* Build a robust, generic scam detection system that can handle various fraud types\n\n### Scenario Structure:\n\nEach scenario includes:\n\n* **Session ID:** Unique identifier\n\n---\n\n\n## Page 3\n\n*   **Initial Message:** The first scam message your API receives\n*   **Metadata:** Context information (channel, language, locale)\n*   **Max Turns:** Maximum conversation exchanges (typically up to 10)\n*   **Fake Data:** Pre-planted intelligence your honeypot should extract\n\n## Why Multiple Scenarios?\n\nYour honeypot will be evaluated on its ability to:\n\n1.  Detect various scam types - not just one specific pattern\n2.  Extract intelligence across different fraud categories\n3.  Maintain realistic engagement in diverse conversation contexts\n4.  Adapt responses based on the scam type and conversation flow\n\n## 2. Multi-Turn Conversation Flow\n\nEach scenario involves up to **10 turns** of conversation:\n\n1.  Turn 1: Your API receives the initial scam message\n2.  Turns 2-10: Your API responds, and an AI generates realistic scammer follow-ups based on your responses\n3.  End: You submit a final output with your analysis\n\n## Example Flow\n\nNone\n\nTurn 1 (Scammer): \"URGENT: Your SBI account has been compromised. Share OTP immediately.\"\n\n↓\n\nYour API Response: \"I'm concerned. Can you verify your identity first?\"\n\n↓\n\nTurn 2 (Scammer): \"I'm calling from SBI fraud department. My ID is SBI-12345.\n\nWhat's your account number?\"\n\n↓\n\nYour API Response: \"What's your phone number so I can call you back?\"\n\n↓\n\nTurn 3 (Scammer): \"You can reach me at +91-9876543210. But we need to act fast!\"\n\n---\n\n\n## Page 4\n\n... continues up to 10 turns\n\n3. API Request Format\n\nYour endpoint will receive POST requests with this structure:\n\n```json\n{\n  \"sessionId\": \"uuid-v4-string\",\n  \"message\": {\n    \"sender\": \"scammer\",\n    \"text\": \"URGENT: Your account has been compromised...\",\n    \"timestamp\": \"2025-02-11T10:30:00Z\"\n  },\n  \"conversationHistory\": [\n    {\n      \"sender\": \"scammer\",\n      \"text\": \"Previous message...\",\n      \"timestamp\": \"(epoch Time in ms)\"\n    },\n    {\n      \"sender\": \"user\",\n      \"text\": \"Your previous response...\",\n      \"timestamp\": \"(epoch Time in ms)\"\n    }\n  ],\n  \"metadata\": {\n    \"channel\": \"SMS\",\n    \"language\": \"English\",\n    \"locale\": \"IN\"\n  }\n}\n```\n\n4. Expected API Response Format\n\n---\n\n\n## Page 5\n\nYour API must return a 200 status code with:\n\n```json\n{\n  \"status\": \"success\",\n  \"reply\": \"Your honeypot's response to the scammer\"\n}\n```\n\nNote: The evaluator will check for reply, message, or text fields in that order.\n\n## 5. Final Output Submission\n\nAfter the conversation ends, you should submit a `finalOutput` to the session log with this structure:\n\n```json\n{\n  \"sessionId\": \"abc123-session-id\",\n  \"scamDetected\": true,\n  \"totalMessagesExchanged\": 18,\n  \"extractedIntelligence\": {\n    \"phoneNumbers\": [ \"+91-9876543210\" ],\n    \"bankAccounts\": [ \"1234567890123456\" ],\n    \"upiIds\": [ \"scammer.fraud@fakebank\" ],\n    \"phishingLinks\": [ \"http://malicious-site.com\" ],\n    \"emailAddresses\": [ \"scammer@fake.com\" ]\n    // like that you found\n  },\n  \"agentNotes\": \"Scammer claimed to be from SBI fraud department, provided fake ID...\"\n}\n\n---\n\n\n## Page 6\n\n# Scoring System (100 Points Total)\n\n## 1. Scam Detection\n\n*   **Gets required points:** `scamDetected: true` in final output\n*   **0 points:** `scamDetected: false` or missing\n\n## 2. Intelligence Extraction (40 points)\n\nPoints awarded for extracting the fake data planted in the conversation:\n\n<table>\n<thead>\n<tr>\n<th>Data Type</th>\n<th>Points</th>\n<th>What to Extract</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Phone Numbers</td>\n<td>10 pts</td>\n<td>Any phone numbers shared by scammer</td>\n</tr>\n<tr>\n<td>Bank Accounts</td>\n<td>10 pts</td>\n<td>Any bank account numbers mentioned</td>\n</tr>\n<tr>\n<td>UPI IDs</td>\n<td>10 pts</td>\n<td>Any UPI IDs provided</td>\n</tr>\n<tr>\n<td>Phishing Links</td>\n<td>10 pts</td>\n<td>Any suspicious URLs shared</td>\n</tr>\n</tbody>\n</table>\n\n**Maximum:** 40 points (you can extract multiple types)\n\n**Example:** If the scammer shares a phone number (+91-9876543210) and UPI ID (scammer@fakeupi), you earn 20 points by including:\n\n```json\n{\n    \"extractedIntelligence\": {\n        \"phoneNumbers\": [\"+91-9876543210\"],\n        \"upiIds\": [\"scammer@fakeupi\"]\n    }\n}\n```\n\n## 3. Engagement Quality (20 points)\n\nPoints based on conversation metrics:\n\n<table>\n<thead>\n<tr>\n<th>Metric</th>\n<th>Points</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Engagement duration > 0 seconds</td>\n<td>5 pts</td>\n</tr>\n</tbody>\n</table>\n\n---\n\n\n## Page 7\n\nEngagement duration > 60 seconds 5 pts\nMessages exchanged > 0 5 pts\nMessages exchanged ≥ 5 5 pts\n\n**Maximum: 20 points**\n\n## 4. Response Structure (20 points)\n\nPoints for proper API response structure:\n\n<table>\n  <thead>\n    <tr>\n      <th>Field</th>\n      <th>Points</th>\n      <th>Type</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>status</td>\n      <td>5 pts</td>\n      <td>Required</td>\n    </tr>\n    <tr>\n      <td>scamDetected</td>\n      <td>5 pts</td>\n      <td>Required</td>\n    </tr>\n    <tr>\n      <td>extractedIntelligence</td>\n      <td>5 pts</td>\n      <td>Required</td>\n    </tr>\n    <tr>\n      <td>engagementMetrics</td>\n      <td>2.5 pts</td>\n      <td>Optional</td>\n    </tr>\n    <tr>\n      <td>agentNotes</td>\n      <td>2.5 pts</td>\n      <td>Optional</td>\n    </tr>\n  </tbody>\n</table>\n\n**Maximum: 20 points**\n\n# Final Score Calculation\n\nYour final score is a weighted average across all test scenarios:\n\n```plaintext\nFinal Score = Σ (Scenario_Score × Scenario_Weight)\n```\n\n## Formula Breakdown:\n\n*   Each scenario contributes its score multiplied by its weight percentage\n*   Weights are determined per test case and may vary\n*   Total weight across all scenarios always equals 100%\n\n---\n\n\n## Page 8\n\n# Example with 3 Scenarios:\n\nFinal Score = (Scenario1_Score × Weight1) + (Scenario2_Score × Weight2) + (Scenario3_Score × Weight3)\n\n# Sample Calculation:\n\n*   Bank Fraud: 85/100 → 85 × 0.35 = 29.75\n*   UPI Fraud: 90/100 → 90 × 0.35 = 31.50\n*   Phishing: 75/100 → 75 × 0.30 = 22.50\n*   Final Score: 84/100\n\n# Example with 5 Scenarios:\n\n<table>\n<thead>\n<tr>\n<th>Scenario</th>\n<th>Score</th>\n<th>Weight</th>\n<th>Contribution</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Bank Fraud</td>\n<td>85/100</td>\n<td>× 20%</td>\n<td>= 17.00</td>\n</tr>\n<tr>\n<td>UPI Fraud</td>\n<td>90/100</td>\n<td>× 20%</td>\n<td>= 18.00</td>\n</tr>\n<tr>\n<td>Phishing</td>\n<td>75/100</td>\n<td>× 20%</td>\n<td>= 15.00</td>\n</tr>\n<tr>\n<td>Investment Scam</td>\n<td>80/100</td>\n<td>× 20%</td>\n<td>= 16.00</td>\n</tr>\n<tr>\n<td>Lottery Scam</td>\n<td>70/100</td>\n<td>× 20%</td>\n<td>= 14.00</td>\n</tr>\n<tr>\n<td colspan=\"3\"><hr></td>\n<td><hr></td>\n</tr>\n<tr>\n<td colspan=\"3\">Final Score:</td>\n<td>80/100</td>\n</tr>\n</tbody>\n</table>\n\n# Important Notes:\n\n*   The number of scenarios is **not fixed** - it may vary per evaluation\n*   Scenario weights are **assigned dynamically** based on the test case\n*   Your API should perform well across all scenarios to maximize score\n*   Poor performance on high-weight scenarios will significantly impact your final score\n\n# Testing Your API\n\n## Requirements Checklist\n\n---\n\n\n## Page 9\n\n* Endpoint URL is publicly accessible\n* API returns 200 status code for valid requests\n* Response includes `reply`, `message`, or `text` field\n* Response time is under 30 seconds\n* API can handle up to 10 sequential requests per session\n* Final output is submitted to session log\n\n## Self-Testing Your Endpoint\n\nBefore submitting, you can test your API locally using the same evaluation logic we use. Below are code examples in Python and JavaScript.\n\n### Python Self-Test Example\n\n```python\nimport requests\nimport uuid\nimport json\nfrom datetime import datetime\n\n# Your API configuration\nENDPOINT_URL = \"https://your-api-endpoint.com/honeypot\"\nAPI_KEY = \"your-api-key-here\" # Optional\n\n# Test scenario\ntest_scenario = {\n    'scenarioId': 'bank_fraud',\n    'name': 'Bank Fraud Detection',\n    'scamType': 'bank_fraud',\n    'initialMessage': 'URGENT: Your SBI account has been compromised. Your account will be blocked in 2 hours. Share your account number and OTP immediately to verify your identity.',\n    'metadata': {\n        'channel': 'SMS',\n        'language': 'English',\n        'locale': 'IN'\n    },\n    'maxTurns': 10,\n    'fakeData': {\n\n---\n\n\n## Page 10\n\njson\n{\n  \"scammer\": {\n    \"name\": \"John Doe\",\n    \"bankAccount\": \"1234567890123456\",\n    \"upiId\": \"scammer.fraud@fakebank\",\n    \"phoneNumber\": \"+91-9876543210\"\n  }\n}\n```\n\n```python\ndef test_honeypot_api():\n    \"\"\"\n    Test your honeypot API endpoint\n    \"\"\"\n\n    # Generate unique session ID\n    session_id = str(uuid.uuid4())\n    conversation_history = []\n\n    # Setup headers\n    headers = {'Content-Type': 'application/json'}\n    if API_KEY:\n        headers['x-api-key'] = API_KEY\n\n    print(f\"Testing Session: {session_id}\")\n    print(\"=\" * 60)\n\n    # Simulate conversation turns\n    for turn in range(1, test_scenario['maxTurns'] + 1):\n        print(f\"\\n--- Turn {turn} ---\")\n\n        # First turn: use initial message\n        if turn == 1:\n            scammer_message = test_scenario['initialMessage']\n        else:\n            # For self-testing, you can manually craft follow-up messages\n            # or use simple templates\n            scammer_message = input(\"Enter next scammer message (or 'quit' to stop): \")\n            if scammer_message.lower() == 'quit':\n                break\n\n        # Process scammer message\n        # (This is where you would normally call your API endpoint)\n        response = process_scammer_message(scammer_message, session_id, conversation_history)\n\n        # Generate scammer response\n        scammer_response = generate_scammer_response(response, conversation_history)\n\n        # Print scammer response\n        print(f\"Scammer Response: {scammer_response}\")\n\n        # Add to conversation history\n        conversation_history.append({\n            'scammerMessage': scammer_message,\n            'scammerResponse': scammer_response\n        })\n\n    # Print conversation history\n    print(\"\\nConversation History:\")\n    for i, item in enumerate(conversation_history, start=1):\n        print(f\"Turn {i}:\")\n        print(f\"Scammer Message: {item['scammerMessage']}\")\n        print(f\"Scammer Response: {item['scammerResponse']}\")\n\n    # Print final session summary\n    print(\"\\nSession Summary:\")\n    print(f\"Total Turns: {len(conversation_history)}\")\n    print(f\"Final Scammer Message: {scammer_message}\")\n    print(f\"Final Scammer Response: {scammer_response}\")\n\n# Example usage\ntest_honeypot_api()\n\n---\n\n\n## Page 11\n\npython\n# Prepare message object\nmessage = {\n    \"sender\": \"scammer\",\n    \"text\": scammer_message,\n    \"timestamp\": datetime.utcnow().isoformat() + \"Z\"\n}\n\n# Prepare request\nrequest_body = {\n    'sessionId': session_id,\n    'message': message,\n    'conversationHistory': conversation_history,\n    'metadata': test_scenario['metadata']\n}\n\nprint(f\"Scammer: {scammer_message}\")\n\ntry:\n    # Call your API\n    response = requests.post(\n        ENDPOINT_URL,\n        headers=headers,\n        json=request_body,\n        timeout=30\n    )\n\n    # Check response\n    if response.status_code != 200:\n        print(f\"❌ ERROR: API returned status {response.status_code}\")\n        print(f\"Response: {response.text}\")\n        break\n\n    response_data = response.json()\n\n---\n\n\n## Page 12\n\npython\n# Extract honeypot reply\nhoneypot_reply = response_data.get('reply') or \\\n                 response_data.get('message') or \\\n                 response_data.get('text')\n\nif not honeypot_reply:\n    print(\"❌ ERROR: No reply/message/text field in response\")\n    print(f\"Response data: {response_data}\")\n    break\n\nprint(f\"✅ Honeypot: {honeypot_reply}\")\n\n# Update conversation history\nconversation_history.append(message)\nconversation_history.append({\n    'sender': 'user',\n    'text': honeypot_reply,\n    'timestamp': datetime.utcnow().isoformat() + \"Z\"\n})\n\nexcept requests.exceptions.Timeout:\n    print(\"❌ ERROR: Request timeout (>30 seconds)\")\n    break\nexcept requests.exceptions.ConnectionError as e:\n    print(f\"❌ ERROR: Connection failed - {e}\")\n    break\nexcept Exception as e:\n    print(f\"❌ ERROR: {e}\")\n    break\n\n# Test final output structure\nprint(\"\\n\" + \"=\" * 60)\nprint(\"Now test your final output structure:\")\nprint(\"=\" * 60)\n\n---\n\n\n## Page 13\n\njson\nfinal_output = {\n    \"sessionId\": \"abc123-session-id\",\n    \"scamDetected\": true,\n    \"totalMessagesExchanged\": 18,\n    \"extractedIntelligence\": {\n        \"phoneNumbers\": [\"+91-9876543210\"],\n        \"bankAccounts\": [\"1234567890123456\"],\n        \"upiIds\": [\"scammer.fraud@fakebank\"],\n        \"phishingLinks\": [\"http://malicious-site.com\"],\n        \"emailAddresses\": [\"scammer@fake.com\"]\n    },\n    \"agentNotes\": \"Scammer claimed to be from SBI fraud department, provided fake ID...\"\n}\n```\n\n# Evaluate the final output\n\nscore = evaluate_final_output(final_output, test_scenario, conversation_history)\n\nprint(f\"\\n📊 Your Score: {score['total']}/100\")\nprint(f\" - Scam Detection: {score['scamDetection']}/20\")\nprint(f\" - Intelligence Extraction: {score['intelligenceExtraction']}/40\")\nprint(f\" - Engagement Quality: {score['engagementQuality']}/20\")\nprint(f\" - Response Structure: {score['responseStructure']}/20\")\n\nreturn score\n\ndef evaluate_final_output(final_output, scenario, conversation_history):\n    \"\"\"Evaluate final output using the same logic as the evaluator\"\"\"\n\n---\n\n\n## Page 14\n\npython\nscore = {\n    'scamDetection': 0,\n    'intelligenceExtraction': 0,\n    'engagementQuality': 0,\n    'responseStructure': 0,\n    'total': 0\n}\n\n# 1. Scam Detection (20 points)\nif final_output.get('scamDetected', False):\n    score['scamDetection'] = 20\n\n# 2. Intelligence Extraction (40 points)\nextracted = final_output.get('extractedIntelligence', {})\nfake_data = scenario.get('fakeData', {})\n\nkey_mapping = {\n    'bankAccount': 'bankAccounts',\n    'upiId': 'upiIds',\n    'phoneNumber': 'phoneNumbers',\n    'phishingLink': 'phishingLinks',\n    'emailAddress': 'emailAddresses'\n}\n\nfor fake_key, fake_value in fake_data.items():\n    output_key = key_mapping.get(fake_key, fake_key)\n    extracted_values = extracted.get(output_key, [])\n\n    if isinstance(extracted_values, list):\n        if any(fake_value in str(v) for v in extracted_values):\n            score['intelligenceExtraction'] += 10\n    elif isinstance(extracted_values, str):\n        if fake_value in extracted_values:\n            score['intelligenceExtraction'] += 10\n\n---\n\n\n## Page 15\n\npython\nscore['intelligenceExtraction'] = min(score['intelligenceExtraction'], 40)\n\n# 3. Engagement Quality (20 points)\nmetrics = final_output.get('engagementMetrics', {})\nduration = metrics.get('engagementDurationSeconds', 0)\nmessages = metrics.get('totalMessagesExchanged', 0)\n\nif duration > 0:\n    score['engagementQuality'] += 5\nif duration > 60:\n    score['engagementQuality'] += 5\nif messages > 0:\n    score['engagementQuality'] += 5\nif messages >= 5:\n    score['engagementQuality'] += 5\n\n# 4. Response Structure (20 points)\nrequired_fields = ['status', 'scamDetected', 'extractedIntelligence']\noptional_fields = ['engagementMetrics', 'agentNotes']\n\nfor field in required_fields:\n    if field in final_output:\n        score['responseStructure'] += 5\n\nfor field in optional_fields:\n    if field in final_output and final_output[field]:\n        score['responseStructure'] += 2.5\n\nscore['responseStructure'] = min(score['responseStructure'], 20)\n\n# Calculate total\nscore['total'] = sum([\n    score['scamDetection'],\n    score['intelligenceExtraction'],\n    score['engagementQuality'],\n    score['responseStructure']\n])\n\n---\n\n\n## Page 16\n\npython\nscore['intelligenceExtraction'],\nscore['engagementQuality'],\nscore['responseStructure']\n)\n\nreturn score\n\n# Run the test\nif __name__ == \"__main__\":\n    test_honeypot_api()\n```\n\n## JavaScript/Node.js Self-Test Example\n\n```javascript\nJavaScript\nconst axios = require('axios');\nconst { v4: uuidv4 } = require('uuid');\n\n// Your API configuration\nconst ENDPOINT_URL = 'https://your-api-endpoint.com/honeypot';\nconst API_KEY = 'your-api-key-here'; // Optional\n\n// Test scenario\nconst testScenario = {\n  scenarioId: 'bank_fraud',\n  name: 'Bank Fraud Detection',\n  scamType: 'bank_fraud',\n  initialMessage: 'URGENT: Your SBI account has been compromised. Your account will be blocked in 2 hours. Share your account number and OTP immediately to verify your identity.',\n  metadata: {\n    channel: 'SMS',\n    language: 'English',\n    locale: 'IN'\n  },\n  maxTurns: 10,\n  fakeData: {\n\n---\n\n\n## Page 17\n\njson\n{\n  \"scammer\": {\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"bankAccount\": '1234567890123456',\n    \"upiId\": 'scammer.fraud@fakebank',\n    \"phoneNumber\": '+91-9876543210'\n  }\n}\n```\n\n```javascript\nasync function testHoneypotAPI() {\n  const sessionId = uuidv4();\n  const conversationHistory = [];\n\n  // Setup headers\n  const headers = {\n    'Content-Type': 'application/json'\n  };\n  if (API_KEY) {\n    headers['x-api-key'] = API_KEY;\n  }\n\n  console.log(`Testing Session: ${sessionId}`);\n  console.log('=' .repeat(60));\n\n  // Test first turn\n  const message = {\n    sender: 'scammer',\n    text: testScenario.initialMessage,\n    timestamp: new Date().toISOString()\n  };\n\n  const requestBody = {\n    sessionId,\n    message,\n    conversationHistory,\n    metadata: testScenario.metadata\n  };\n\n  console.log(`\\n--- Turn 1 ---`);\n\n---\n\n\n## Page 18\n\njavascript\nconsole.log(`Scammer: ${message.text}`);\n\ntry {\n  const response = await axios.post(ENDPOINT_URL, requestBody,\n  {\n    headers,\n    timeout: 30000\n  });\n\n  if (response.status !== 200) {\n    console.error('❌ ERROR: API returned status ${response.status}');\n    return;\n  }\n\n  const honeypotReply = response.data.reply ||\n                        response.data.message ||\n                        response.data.text;\n\n  if (!honeypotReply) {\n    console.error('❌ ERROR: No reply/message/text field in response');\n    console.error('Response data:', response.data);\n    return;\n  }\n\n  console.log(`✅ Honeypot: ${honeypotReply}`);\n\n  // Update conversation history\n  conversationHistory.push(message);\n  conversationHistory.push({\n    sender: 'user',\n    text: honeypotReply,\n    timestamp: new Date().toISOString()\n  });\n} catch (error) {\n  console.error('❌ ERROR: API request failed', error);\n}\n\n---\n\n\n## Page 19\n\njavascript\n// Evaluate final output\nconst finalOutput = {\n  status: 'completed',\n  scamDetected: true,\n  scamType: testScenario.scamType,\n  extractedIntelligence: {\n    phoneNumbers: [],\n    bankAccounts: [],\n    upiIds: [],\n    phishingLinks: [],\n    emailAddresses: []\n  },\n  engagementMetrics: {\n    totalMessagesExchanged: conversationHistory.length,\n    engagementDurationSeconds: 120\n  },\n  agentNotes: 'Add your analysis here...'\n};\n\nconst score = evaluateFinalOutput(finalOutput, testScenario, conversationHistory);\n\nconsole.log('\\n' + '='.repeat(60));\nconsole.log(`📊 Your Score: ${score.total}/100`);\nconsole.log(` - Scam Detection: ${score.scamDetection}/20`);\nconsole.log(` - Intelligence Extraction: ${score.intelligenceExtraction}/40`);\nconsole.log(` - Engagement Quality: ${score.engagementQuality}/20`);\nconsole.log(` - Response Structure: ${score.responseStructure}/20`);\n\n} catch (error) {\n  if (error.code === 'ECONNABORTED') {\n    console.error('❌ ERROR: Request timeout (>30 seconds)');\n  }\n}\n\n---\n\n\n## Page 20\n\njavascript\n} else if (error.code === 'ECONNREFUSED') {\n  console.error('❌ ERROR: Connection refused');\n} else {\n  console.error('❌ ERROR:', error.message);\n}\n```\n\n```javascript\nfunction evaluateFinalOutput(finalOutput, scenario, conversationHistory) {\n  const score = {\n    scamDetection: 0,\n    intelligenceExtraction: 0,\n    engagementQuality: 0,\n    responseStructure: 0,\n    total: 0\n  };\n\n  // 1. Scam Detection (20 points)\n  if (finalOutput.scamDetected) {\n    score.scamDetection = 20;\n  }\n\n  // 2. Intelligence Extraction (40 points)\n  const extracted = finalOutput.extractedIntelligence || {};\n  const fakeData = scenario.fakeData || {};\n\n  const keyMapping = {\n    bankAccount: 'bankAccounts',\n    upiId: 'upiIds',\n    phoneNumber: 'phoneNumbers',\n    phishingLink: 'phishingLinks',\n    emailAddress: 'emailAddresses'\n  };\n\n  for (const [fakeKey, fakeValue] of Object.entries(fakeData)) {\n    const mappedKey = keyMapping[fakeKey];\n    if (mappedKey) {\n      const matchingValue = finalOutput[mappedKey];\n      if (matchingValue && Array.isArray(matchingValue)) {\n        const isMatch = matchingValue.some((item) => item === fakeValue);\n        if (isMatch) {\n          score.intelligenceExtraction += 40;\n        }\n      }\n    }\n  }\n\n---\n\n\n## Page 21\n\njavascript\nconst outputKey = keyMapping[ fakeKey ] || fakeKey;\nconst extractedValues = extracted[outputKey] || [];\n\nif (Array.isArray(extractedValues)) {\n  if (extractedValues.some(v => String(v).includes(fakeValue))) {\n    score.intelligenceExtraction += 10;\n  }\n} else if (typeof extractedValues === 'string') {\n  if (extractedValues.includes(fakeValue)) {\n    score.intelligenceExtraction += 10;\n  }\n}\n\nscore.intelligenceExtraction =\nMath.min(score.intelligenceExtraction, 40);\n\n// 3. Engagement Quality (20 points)\nconst metrics = finalOutput.engagementMetrics || {};\nconst duration = metrics.engagementDurationSeconds || 0;\nconst messages = metrics.totalMessagesExchanged || 0;\n\nif (duration > 0) score.engagementQuality += 5;\nif (duration > 60) score.engagementQuality += 5;\nif (messages > 0) score.engagementQuality += 5;\nif (messages >= 5) score.engagementQuality += 5;\n\n// 4. Response Structure (20 points)\nconst requiredFields = ['status', 'scamDetected', 'extractedIntelligence'];\nconst optionalFields = ['engagementMetrics', 'agentNotes'];\n\nrequiredFields.forEach(field => {\n  if (field in finalOutput) {\n    score.responseStructure += 5;\n  }\n});\n\n---\n\n\n## Page 22\n\njava\n}\n});\n\noptionalFields.forEach(field => {\n  if (field in finalOutput && finalOutput[field]) {\n    score.responseStructure += 2.5;\n  }\n});\n\nscore.responseStructure = Math.min(score.responseStructure, 20);\n\n// Calculate total\nscore.total = score.scamDetection +\n              score.intelligenceExtraction +\n              score.engagementQuality +\n              score.responseStructure;\n\nreturn score;\n}\n\n// Run the test\ntestHoneypotAPI();\n```\n\ncURL Quick Test\n\nFor a quick manual test, use cURL:\n\n```bash\nShell\ncurl -X POST https://your-api-endpoint.com/honeypot \\\n  -H \"Content-Type: application/json\" \\\n  -H \"x-api-key: your-api-key-here\" \\\n  -d '{\n    \"sessionId\": \"test-session-123\",\n    \"message\": {\n\n---\n\n\n## Page 23\n\njson\n{\n  \"sender\": \"scammer\",\n  \"text\": \"URGENT: Your SBI account has been compromised. Share OTP immediately.\",\n  \"timestamp\": \"2025-02-11T10:30:00Z\"\n},\n\"conversationHistory\": [],\n\"metadata\": {\n  \"channel\": \"SMS\",\n  \"language\": \"English\",\n  \"locale\": \"IN\"\n}\n}\n```\n\nExpected response:\n\n```json\n{\n  \"reply\": \"I'm concerned about my account. Can you verify your identity first?\"\n}\n```\n\n**Common Failure Scenarios**\n\n1. API Timeout: Requests must complete within 30 seconds\n2. Connection Error: Ensure your endpoint is accessible\n3. Invalid Response Format: Must return JSON with reply/message/text field\n4. Non-200 Status Code: Always return 200 for successful processing\n\n**Authentication**\n\nIf you provide an api_key in your submission, requests will include:\n\nNone\n\nHeaders:\nContent-Type: application/json\n\n---\n\n\n## Page 24\n\nx-api-key: your-api-key-here\n\n# Fake Data Reference\n\n⚠️ **Important:** The examples below are for **illustration purposes only**. Actual test scenarios will use different data.\n\nDuring testing, scammers will use pre-configured fake data similar to these examples:\n\n## Example: Bank Fraud Scenario\n\n*   Bank Account: 1234567890123456\n*   UPI ID: scammer.fraud@fakebank\n*   Phone: +91-9876543210\n\n## Example: UPI Fraud Scenario\n\n*   UPI ID: cashback.scam@fakeupi\n*   Phone: +91-8765432109\n\n## Example: Phishing Scenario\n\n*   Link: http://amaz0n-deals.fake-site.com/claim?id=12345\n*   Email: offers@fake-amazon-deals.com\n\n### Your Goal:\n\n*   Extract **any intelligence** shared by the scammer during conversation\n*   Don't rely on these specific examples - actual test data will be different\n*   Build generic extraction logic that works for any phone number, account, URL, etc.\n*   Include extracted data in the appropriate fields of your final output\n\n### What to Extract:\n\n*   &lt;img&gt;Phone icon&lt;/img&gt; Phone numbers (any format)\n*   &lt;img&gt;Bank icon&lt;/img&gt; Bank account numbers\n*   &lt;img&gt;UPI icon&lt;/img&gt; UPI IDs\n*   &lt;img&gt;Link icon&lt;/img&gt; Suspicious URLs/links\n*   &lt;img&gt;Email icon&lt;/img&gt; Email addresses\n\n---\n\n\n## Page 25\n\n*   &lt;img&gt;ID icon&lt;/img&gt; Any other identifying information\n\n# Tips for Success\n\n1.  **Build Generic Detection Logic**: Don't hardcode responses for specific scenarios - your system should detect scams based on patterns, keywords, and behavior\n2.  **Ask Identifying Questions**: Request phone numbers, account details, verification codes to extract intelligence\n3.  **Maintain Engagement**: Keep the scammer talking for longer conversations to maximize engagement score\n4.  **Extract All Intelligence**: Capture every piece of information shared (numbers, emails, links, IDs)\n5.  **Proper Structure**: Follow the exact JSON format for final output\n6.  **Handle Edge Cases**: Be prepared for various scammer tactics and responses across different fraud types\n7.  **Use AI/LLM Wisely**: Leverage language models for natural conversation, not for hardcoded test detection\n8.  **Test Thoroughly**: Use the self-test scripts to validate your implementation before submission\n9.  **Document Your Approach**: Clear README helps in code review if your submission is selected\n10. **Think Like a Real Honeypot**: Your goal is to waste scammer time, extract data, and detect fraud - not to ace a specific test\n\n# Evaluation Timeline\n\n1.  **Conversation Phase**: Up to 10 turns (approximately 2-5 minutes)\n2.  **Final Output Wait**: System waits 10 seconds for your final submission\n3.  **Scoring**: Automated evaluation runs immediately after\n4.  **Results**: Available in the session log and leaderboard\n\n# Submission Requirements\n\n## What to Submit\n\nYour submission must include:\n\n1.  **Deployed Endpoint URL**\n    *   A publicly accessible HTTPS endpoint\n    *   Example: https://your-api.herokuapp.com/honeypot\n\n---\n\n\n## Page 26\n\n2. **API Key** (Optional)\n    *   If your endpoint requires authentication\n    *   Will be sent as `x-api-key` header\n\n3. **GitHub Repository URL ⭐ REQUIRED**\n    *   Public repository containing your complete source code\n    *   Must include:\n        *   Implementation code\n        *   README.md with setup instructions\n        *   Requirements/dependencies file (requirements.txt, package.json, etc.)\n        *   API documentation\n    *   Example: https://github.com/username/honeypot-api\n\n## GitHub Repository Requirements\n\nYour repository should include:\n\n```mermaid\ngitGraph\n  commit id: \"Initial commit\"\n  branch main\n  commit id: \"Add main.py\"\n  branch feature\n  commit id: \"Implement honeypot logic\"\n  checkout main\n  merge feature\n```\n\n# Setup and usage instructions\n# Source code\n# Main API implementation\n# Honeypot logic\n# Python dependencies\n# Node.js dependencies (if applicable)\n# Environment variables template\n# Additional documentation\n\n## Minimum README Content:\n\n# Honeypot API\n\n---\n\n\n## Page 27\n\n## Description\nBrief description of your approach and strategy\n\n## Tech Stack\n- Language/Framework\n- Key libraries\n- LLM/AI models used (if any)\n\n## Setup Instructions\n1. Clone the repository\n2. Install dependencies\n3. Set environment variables\n4. Run the application\n\n## API Endpoint\n- URL: https://your-deployed-url.com/honeypot\n- Method: POST\n- Authentication: x-api-key header\n\n## Approach\nExplain your honeypot strategy:\n- How you detect scams\n- How you extract intelligence\n- How you maintain engagement\n\n## Code Review Policy\n\n⚠️ **Important:** In certain cases, we will manually review your GitHub code in addition to automated testing:\n\n**Code review will be conducted when:**\n\n1. **High Scores with Suspicious Patterns**\n    * Scores above 95% on all scenarios\n    * Perfect intelligence extraction without realistic conversation flow\n    * Identical responses across different scenarios\n\n---\n\n\n## Page 28\n\n2. **Anomalous API Behavior**\n    * Extremely fast responses (<100ms) with complex outputs\n    * Inconsistent behavior across test runs\n    * Response patterns that suggest hardcoded answers\n\n3. **Random Audit**\n    * A random sample of submissions (approximately 10-15%)\n    * To ensure fairness and maintain competition integrity\n\n4. **Edge Cases or Disputes**\n    * When automated scoring produces unexpected results\n    * If participants contest their scores\n\n**What We Look For in Code Review:**\n\n☑ **Acceptable Practices:**\n* Using LLMs/AI models for conversation and analysis\n* Rule-based pattern matching for scam detection\n* Natural language processing for intelligence extraction\n* Database or state management for context tracking\n* Third-party APIs for enhanced detection\n\n☒ **Unacceptable Practices:**\n* Hardcoded responses specific to test scenarios\n* Detecting and responding differently to evaluation traffic\n* Pre-mapped answers based on known test data\n* Bypassing actual scam detection with test-specific logic\n* Any form of evaluation system exploitation\n\n**Code Review Impact:**\n\n* ☑ **Passes Review:** Score remains unchanged, submission valid\n* ⚠️ **Minor Issues:** Warning issued, score may be adjusted\n* ❌ **Fails Review:** Disqualification from hackathon, score set to 0\n\n**Example of Prohibited Code:**\n\n```python\n# ❌ WRONG - Hardcoded test detection\n\n---\n\n\n## Page 29\n\njson\n{\n  \"reply\": \"Can you provide your employee ID?\",\n  \"scamDetected\": True,\n  \"extractedIntelligence\": {\n    \"phoneNumbers\": [ \"+91-9876543210\" ] # Pre-known test data\n  }\n}\n```\n\n## Example of Acceptable Code:\n\n```python\n# ✅ CORRECT - Generic scam detection\nscam_keywords = [\"urgent\", \"blocked\", \"verify\", \"OTP\", \"account compromised\"]\nif any(keyword.lower() in message.lower() for keyword in scam_keywords):\n    scam_score += 0.2\n\n# Use AI/LLM for intelligent response\nresponse = llm.generate_response(conversation_history, message)\n\n# Extract entities using NLP\nextracted_data = extract_entities(message, conversation_history)\n```\n\n## Submission Format\n\nSubmit your details in the following format:\n\n```json\n{\n  \"deployed_url\": \"https://your-api-endpoint.com/honeypot\",\n  \"api_key\": \"your-api-key-here\",\n\n---\n\n\n## Page 30\n\njson\n{\n  \"github_url\": \"https://github.com/username/honeypot-api\"\n}\n```\n\nOr via the submission form:\n\n<table>\n  <tr>\n    <td><b>Field</b></td>\n    <td><b>Value</b></td>\n  </tr>\n  <tr>\n    <td>Deployed URL</td>\n    <td>https://your-api-endpoint.com/honeypot</td>\n  </tr>\n  <tr>\n    <td>API Key</td>\n    <td>your-api-key-here (optional)</td>\n  </tr>\n  <tr>\n    <td>GitHub URL</td>\n    <td>https://github.com/username/honeypot-api</td>\n  </tr>\n</table>\n\n⚠️ **Incomplete Submissions**: Submissions without a valid GitHub URL will be automatically rejected.\n\n## Support\n\nIf your API fails evaluation:\n\n*   Check the `honeyPotTestingSessionLog` collection for detailed error messages\n*   Review the `conversationHistory` to see the exact exchange\n*   Verify your endpoint is accessible and returning proper responses\n*   Ensure response times are under 30 seconds\n*   Ensure your GitHub repository is public and accessible\n*   Verify your code follows acceptable practices (no hardcoded test responses)\n\n## FAQs\n\n**Q:** Can I use third-party AI APIs (OpenAI, Anthropic, etc.)?\n**A:** Yes, absolutely! Using LLMs for conversation and analysis is encouraged.\n\n**Q:** Can I use pre-trained models for scam detection?\n**A:** Yes, using existing ML models or training your own is acceptable.\n\n**Q:** What if my repository has sensitive API keys?\n**A:** Use environment variables and include a `.env.example` file. Never commit actual keys.\n\n---\n\n\n## Page 31\n\n**Q:** Can I make my repository private after submission?\n**A:** No, keep it public until evaluation is complete and results are announced.\n\n**Q:** How do I know if my code will be reviewed?\n**A:** You won't know in advance. Assume all submissions may be reviewed. Write clean, honest code.\n\n**Q:** What if I used a framework or boilerplate code?\n**A:** That's fine! Just document it in your README and ensure your core logic is original.\n\n---\n\n**Good luck with your submission!** The evaluation system is designed to test real-world honeypot capabilities in a fair and standardized manner. Remember: creativity in approach is valued, but integrity in implementation is required.",
-      "metadata": {}
-    }
-  }
+"sender": "scammer",
+"text": "Previous message...",
+"timestamp": "(epoch Time in ms)"
+},
+{
+"sender": "user",
+"text": "Your previous response...",
+"timestamp": "(epoch Time in ms)"
 }
+],
+"metadata": {
+"channel": "SMS",
+"language": "English",
+"locale": "IN"
+}
+}
+```
+### 4. Expected API Response Format
+
+
+```
+JSON
+```
+```
+JSON
+```
+Your API must return a 200 status code with:
+
+#### {
+
+```
+"status": "success",
+"reply": "Your honeypot's response to the scammer"
+}
+```
+**Note** : The evaluator will check for reply, message, or text fields in that order.
+
+### 5. Final Output Submission
+
+After the conversation ends, you should submit a finalOutput to the session log with this
+structure:
+
+#### {
+
+```
+"sessionId": "abc123-session-id",
+"scamDetected": true,
+"totalMessagesExchanged": 18 ,
+"extractedIntelligence": {
+"phoneNumbers": ["+91-9876543210"],
+"bankAccounts": ["1234567890123456"],
+"upiIds": ["scammer.fraud@fakebank"],
+"phishingLinks": ["http://malicious-site.com"],
+"emailAddresses": ["scammer@fake.com"]
+// like that you found
+},
+"agentNotes": "Scammer claimed to be from SBI fraud department,
+provided fake ID..."
+}
+```
+
+```
+JSON
+```
+## Scoring System (100 Points Total)
+
+### 1. Scam Detection
+
+```
+● Gets required points :scamDetected: true in final output
+● 0 points : scamDetected: false or missing
+```
+### 2. Intelligence Extraction (40 points)
+
+Points awarded for extracting the fake data planted in the conversation:
+
+```
+Data Type Points What to Extract
+```
+```
+Phone Numbers 10 pts Any phone numbers shared by scammer
+```
+```
+Bank Accounts 10 pts Any bank account numbers mentioned
+```
+```
+UPI IDs 10 pts Any UPI IDs provided
+```
+```
+Phishing Links 10 pts Any suspicious URLs shared
+```
+**Maximum** : 40 points (you can extract multiple types)
+
+**Example** : If the scammer shares a phone number (+91-9876543210) and UPI ID
+(scammer@fakeupi), you earn 20 points by including:
+
+```
+"extractedIntelligence": {
+"phoneNumbers": ["+91-9876543210"],
+"upiIds": ["scammer@fakeupi"]
+}
+```
+### 3. Engagement Quality (20 points)
+
+Points based on conversation metrics:
+
+```
+Metric Points
+```
+```
+Engagement duration > 0 seconds 5 pts
+```
+
+```
+None
+```
+```
+Engagement duration > 60 seconds 5 pts
+```
+```
+Messages exchanged > 0 5 pts
+```
+```
+Messages exchanged ≥ 5 5 pts
+```
+**Maximum** : 20 points
+
+### 4. Response Structure (20 points)
+
+Points for proper API response structure:
+
+```
+Field Points Type
+```
+```
+status 5 pts^ Required^
+```
+```
+scamDetected 5 pts^ Required^
+```
+```
+extractedIntellig
+ence
+```
+```
+5 pts Required
+```
+```
+engagementMetrics 2.5^ pts^ Optional^
+```
+```
+agentNotes 2.5^ pts^ Optional^
+```
+**Maximum** : 20 points
+
+## Final Score Calculation
+
+Your final score is a **weighted average** across all test scenarios:
+
+```
+Final Score = Σ (Scenario_Score × Scenario_Weight)
+```
+**Formula Breakdown:**
+
+```
+● Each scenario contributes its score multiplied by its weight percentage
+● Weights are determined per test case and may vary
+● Total weight across all scenarios always equals 100%
+```
+
+```
+None
+```
+```
+None
+```
+**Example with 3 Scenarios:**
+
+```
+Final Score = (Scenario1_Score × Weight1) +
+(Scenario2_Score × Weight2) +
+(Scenario3_Score × Weight3)
+```
+**Sample Calculation:**
+
+```
+● Bank Fraud: 85/100 → 85 × 0.35 = 29.
+● UPI Fraud: 90/100 → 90 × 0.35 = 31.
+● Phishing: 75/100 → 75 × 0.30 = 22.
+● Final Score : 84/
+```
+**Example with 5 Scenarios:**
+
+```
+Scenario Score Weight Contribution
+─────────────────────────────────────────────────
+Bank Fraud 85/100 × 20% = 17.
+UPI Fraud 90/100 × 20% = 18.
+Phishing 75/100 × 20% = 15.
+Investment Scam 80/100 × 20% = 16.
+Lottery Scam 70/100 × 20% = 14.
+───────
+Final Score: 80/
+```
+**Important Notes:**
+
+```
+● The number of scenarios is not fixed - it may vary per evaluation
+● Scenario weights are assigned dynamically based on the test case
+● Your API should perform well across all scenarios to maximize score
+● Poor performance on high-weight scenarios will significantly impact your final score
+```
+## Testing Your API
+
+### Requirements Checklist
+
+
+```
+Python
+```
+```
+● [ ] Endpoint URL is publicly accessible
+● [ ] API returns 200 status code for valid requests
+● [ ] Response includes reply, message, or text field
+● [ ] Response time is under 30 seconds
+● [ ] API can handle up to 10 sequential requests per session
+● [ ] Final output is submitted to session log
+```
+### Self-Testing Your Endpoint
+
+Before submitting, you can test your API locally using the same evaluation logic we use. Below
+are code examples in Python and JavaScript.
+
+**Python Self-Test Example**
+
+```
+import requests
+import uuid
+import json
+from datetime import datetime
+```
+```
+# Your API configuration
+ENDPOINT_URL = "https://your-api-endpoint.com/honeypot"
+API_KEY = "your-api-key-here" # Optional
+```
+```
+# Test scenario
+test_scenario = {
+'scenarioId': 'bank_fraud',
+'name': 'Bank Fraud Detection',
+'scamType': 'bank_fraud',
+'initialMessage': 'URGENT: Your SBI account has been
+compromised. Your account will be blocked in 2 hours. Share your
+account number and OTP immediately to verify your identity.',
+'metadata': {
+'channel': 'SMS',
+'language': 'English',
+'locale': 'IN'
+},
+'maxTurns': 10 ,
+'fakeData': {
+```
+
+'bankAccount': '1234567890123456',
+'upiId': 'scammer.fraud@fakebank',
+'phoneNumber': '+91-9876543210'
+}
+}
+
+def test_honeypot_api():
+"""Test your honeypot API endpoint"""
+
+# Generate unique session ID
+session_id = str(uuid.uuid4())
+conversation_history = []
+
+# Setup headers
+headers = {'Content-Type': 'application/json'}
+if API_KEY:
+headers['x-api-key'] = API_KEY
+
+print(f"Testing Session: {session_id}")
+print("=" * 60 )
+
+# Simulate conversation turns
+for turn in range( 1 , test_scenario['maxTurns'] + 1 ):
+print(f"\n--- Turn {turn} ---")
+
+# First turn: use initial message
+if turn == 1 :
+scammer_message = test_scenario['initialMessage']
+else:
+# For self-testing, you can manually craft follow-up
+messages
+# or use simple templates
+scammer_message = input("Enter next scammer message
+(or 'quit' to stop): ")
+if scammer_message.lower() == 'quit':
+break
+
+
+# Prepare message object
+message = {
+"sender": "scammer",
+"text": scammer_message,
+"timestamp": datetime.utcnow().isoformat() + "Z"
+}
+
+# Prepare request
+request_body = {
+'sessionId': session_id,
+'message': message,
+'conversationHistory': conversation_history,
+'metadata': test_scenario['metadata']
+}
+
+print(f"Scammer: {scammer_message}")
+
+try:
+# Call your API
+response = requests.post(
+ENDPOINT_URL,
+headers=headers,
+json=request_body,
+timeout= 30
+)
+
+# Check response
+if response.status_code != 200 :
+print(f"❌ ERROR: API returned status
+{response.status_code}")
+print(f"Response: {response.text}")
+break
+
+response_data = response.json()
+
+
+# Extract honeypot reply
+honeypot_reply = response_data.get('reply') or \
+response_data.get('message') or \
+response_data.get('text')
+
+if not honeypot_reply:
+print("❌ ERROR: No reply/message/text field in
+response")
+print(f"Response data: {response_data}")
+break
+
+print(f"✅ Honeypot: {honeypot_reply}")
+
+# Update conversation history
+conversation_history.append(message)
+conversation_history.append({
+'sender': 'user',
+'text': honeypot_reply,
+'timestamp': datetime.utcnow().isoformat() + "Z"
+})
+
+except requests.exceptions.Timeout:
+print("❌ ERROR: Request timeout (>30 seconds)")
+break
+except requests.exceptions.ConnectionError as e:
+print(f"❌ ERROR: Connection failed - {e}")
+break
+except Exception as e:
+print(f"❌ ERROR: {e}")
+break
+
+# Test final output structure
+print("\n" + "=" * 60 )
+print("Now test your final output structure:")
+print("=" * 60 )
+
+
+final_output = {
+"sessionId": "abc123-session-id",
+"scamDetected": true,
+"totalMessagesExchanged": 18 ,
+"extractedIntelligence": {
+"phoneNumbers": ["+91-9876543210"],
+"bankAccounts": ["1234567890123456"],
+"upiIds": ["scammer.fraud@fakebank"],
+"phishingLinks": ["http://malicious-site.com"],
+"emailAddresses": ["scammer@fake.com"]
+},
+"agentNotes": "Scammer claimed to be from SBI fraud
+department, provided fake ID..."
+
+}
+
+# Evaluate the final output
+score = evaluate_final_output(final_output, test_scenario,
+conversation_history)
+
+print(f"\n📊 Your Score: {score['total']}/100")
+print(f" - Scam Detection: {score['scamDetection']}/20")
+print(f" - Intelligence Extraction:
+{score['intelligenceExtraction']}/40")
+print(f" - Engagement Quality:
+{score['engagementQuality']}/20")
+print(f" - Response Structure:
+{score['responseStructure']}/20")
+
+return score
+
+def evaluate_final_output(final_output, scenario,
+conversation_history):
+"""Evaluate final output using the same logic as the
+evaluator"""
+
+
+score = {
+'scamDetection': 0 ,
+'intelligenceExtraction': 0 ,
+'engagementQuality': 0 ,
+'responseStructure': 0 ,
+'total': 0
+}
+
+# 1. Scam Detection (20 points)
+if final_output.get('scamDetected', False):
+score['scamDetection'] = 20
+
+# 2. Intelligence Extraction (40 points)
+extracted = final_output.get('extractedIntelligence', {})
+fake_data = scenario.get('fakeData', {})
+
+key_mapping = {
+'bankAccount': 'bankAccounts',
+'upiId': 'upiIds',
+'phoneNumber': 'phoneNumbers',
+'phishingLink': 'phishingLinks',
+'emailAddress': 'emailAddresses'
+}
+
+for fake_key, fake_value in fake_data.items():
+output_key = key_mapping.get(fake_key, fake_key)
+extracted_values = extracted.get(output_key, [])
+
+if isinstance(extracted_values, list):
+if any(fake_value in str(v) for v in
+extracted_values):
+score['intelligenceExtraction'] += 10
+elif isinstance(extracted_values, str):
+if fake_value in extracted_values:
+score['intelligenceExtraction'] += 10
+
+
+score['intelligenceExtraction'] =
+min(score['intelligenceExtraction'], 40 )
+
+# 3. Engagement Quality (20 points)
+metrics = final_output.get('engagementMetrics', {})
+duration = metrics.get('engagementDurationSeconds', 0 )
+messages = metrics.get('totalMessagesExchanged', 0 )
+
+if duration > 0 :
+score['engagementQuality'] += 5
+if duration > 60 :
+score['engagementQuality'] += 5
+if messages > 0 :
+score['engagementQuality'] += 5
+if messages >= 5 :
+score['engagementQuality'] += 5
+
+# 4. Response Structure (20 points)
+required_fields = ['status', 'scamDetected',
+'extractedIntelligence']
+optional_fields = ['engagementMetrics', 'agentNotes']
+
+for field in required_fields:
+if field in final_output:
+score['responseStructure'] += 5
+
+for field in optional_fields:
+if field in final_output and final_output[field]:
+score['responseStructure'] += 2. 5
+
+score['responseStructure'] = min(score['responseStructure'],
+20 )
+
+# Calculate total
+score['total'] = sum([
+score['scamDetection'],
+
+
+```
+JavaScript
+```
+```
+score['intelligenceExtraction'],
+score['engagementQuality'],
+score['responseStructure']
+])
+```
+```
+return score
+```
+```
+# Run the test
+if __name__ == "__main__":
+test_honeypot_api()
+```
+**JavaScript/Node.js Self-Test Example**
+
+```
+const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
+```
+```
+// Your API configuration
+const ENDPOINT_URL = 'https://your-api-endpoint.com/honeypot';
+const API_KEY = 'your-api-key-here'; // Optional
+```
+```
+// Test scenario
+const testScenario = {
+scenarioId: 'bank_fraud',
+name: 'Bank Fraud Detection',
+scamType: 'bank_fraud',
+initialMessage: 'URGENT: Your SBI account has been compromised.
+Your account will be blocked in 2 hours. Share your account
+number and OTP immediately to verify your identity.',
+metadata: {
+channel: 'SMS',
+language: 'English',
+locale: 'IN'
+},
+maxTurns: 10,
+fakeData: {
+```
+
+bankAccount: '1234567890123456',
+upiId: 'scammer.fraud@fakebank',
+phoneNumber: '+91-9876543210'
+}
+};
+
+async function testHoneypotAPI() {
+const sessionId = uuidv4();
+const conversationHistory = [];
+
+// Setup headers
+const headers = {
+'Content-Type': 'application/json'
+};
+if (API_KEY) {
+headers['x-api-key'] = API_KEY;
+}
+
+console.log(`Testing Session: ${sessionId}`);
+console.log('='.repeat(60));
+
+// Test first turn
+const message = {
+sender: 'scammer',
+text: testScenario.initialMessage,
+timestamp: new Date().toISOString()
+};
+
+const requestBody = {
+sessionId,
+message,
+conversationHistory,
+metadata: testScenario.metadata
+};
+
+console.log(`\n--- Turn 1 ---`);
+
+
+console.log(`Scammer: ${message.text}`);
+
+try {
+const response = await axios.post(ENDPOINT_URL, requestBody,
+{
+headers,
+timeout: 30000
+});
+
+if (response.status !== 200) {
+console.error(`❌ ERROR: API returned status
+${response.status}`);
+return;
+}
+
+const honeypotReply = response.data.reply ||
+response.data.message ||
+response.data.text;
+
+if (!honeypotReply) {
+console.error('❌ ERROR: No reply/message/text field in
+response');
+console.error('Response data:', response.data);
+return;
+}
+
+console.log(`✅ Honeypot: ${honeypotReply}`);
+
+// Update conversation history
+conversationHistory.push(message);
+conversationHistory.push({
+sender: 'user',
+text: honeypotReply,
+timestamp: new Date().toISOString()
+});
+
+
+// Evaluate final output
+const finalOutput = {
+status: 'completed',
+scamDetected: true,
+scamType: testScenario.scamType,
+extractedIntelligence: {
+phoneNumbers: [],
+bankAccounts: [],
+upiIds: [],
+phishingLinks: [],
+emailAddresses: []
+},
+engagementMetrics: {
+totalMessagesExchanged: conversationHistory.length,
+engagementDurationSeconds: 120
+},
+agentNotes: 'Add your analysis here...'
+};
+
+const score = evaluateFinalOutput(finalOutput, testScenario,
+conversationHistory);
+
+console.log('\n' + '='.repeat(60));
+console.log(`📊 Your Score: ${score.total}/100`);
+console.log(` - Scam Detection:
+${score.scamDetection}/20`);
+console.log(` - Intelligence Extraction:
+${score.intelligenceExtraction}/40`);
+console.log(` - Engagement Quality:
+${score.engagementQuality}/20`);
+console.log(` - Response Structure:
+${score.responseStructure}/20`);
+
+} catch (error) {
+if (error.code === 'ECONNABORTED') {
+console.error('❌ ERROR: Request timeout (>30 seconds)');
+
+
+} else if (error.code === 'ECONNREFUSED') {
+console.error('❌ ERROR: Connection refused');
+} else {
+console.error('❌ ERROR:', error.message);
+}
+}
+}
+
+function evaluateFinalOutput(finalOutput, scenario,
+conversationHistory) {
+const score = {
+scamDetection: 0,
+intelligenceExtraction: 0,
+engagementQuality: 0,
+responseStructure: 0,
+total: 0
+};
+
+// 1. Scam Detection (20 points)
+if (finalOutput.scamDetected) {
+score.scamDetection = 20;
+}
+
+// 2. Intelligence Extraction (40 points)
+const extracted = finalOutput.extractedIntelligence || {};
+const fakeData = scenario.fakeData || {};
+
+const keyMapping = {
+bankAccount: 'bankAccounts',
+upiId: 'upiIds',
+phoneNumber: 'phoneNumbers',
+phishingLink: 'phishingLinks',
+emailAddress: 'emailAddresses'
+};
+
+for (const [fakeKey, fakeValue] of Object.entries(fakeData)) {
+
+
+const outputKey = keyMapping[fakeKey] || fakeKey;
+const extractedValues = extracted[outputKey] || [];
+
+if (Array.isArray(extractedValues)) {
+if (extractedValues.some(v =>
+String(v).includes(fakeValue))) {
+score.intelligenceExtraction += 10;
+}
+} else if (typeof extractedValues === 'string') {
+if (extractedValues.includes(fakeValue)) {
+score.intelligenceExtraction += 10;
+}
+}
+}
+
+score.intelligenceExtraction =
+Math.min(score.intelligenceExtraction, 40);
+
+// 3. Engagement Quality (20 points)
+const metrics = finalOutput.engagementMetrics || {};
+const duration = metrics.engagementDurationSeconds || 0;
+const messages = metrics.totalMessagesExchanged || 0;
+
+if (duration > 0) score.engagementQuality += 5;
+if (duration > 60) score.engagementQuality += 5;
+if (messages > 0) score.engagementQuality += 5;
+if (messages >= 5) score.engagementQuality += 5;
+
+// 4. Response Structure (20 points)
+const requiredFields = ['status', 'scamDetected',
+'extractedIntelligence'];
+const optionalFields = ['engagementMetrics', 'agentNotes'];
+
+requiredFields.forEach(field => {
+if (field in finalOutput) {
+score.responseStructure += 5;
+
+
+```
+Shell
+```
+#### }
+
+#### });
+
+```
+optionalFields.forEach(field => {
+if (field in finalOutput && finalOutput[field]) {
+score.responseStructure += 2.5;
+}
+});
+```
+```
+score.responseStructure = Math.min(score.responseStructure,
+20);
+```
+```
+// Calculate total
+score.total = score.scamDetection +
+score.intelligenceExtraction +
+score.engagementQuality +
+score.responseStructure;
+```
+```
+return score;
+}
+```
+```
+// Run the test
+testHoneypotAPI();
+```
+**cURL Quick Test**
+
+For a quick manual test, use cURL:
+
+```
+curl -X POST https://your-api-endpoint.com/honeypot \
+-H "Content-Type: application/json" \
+-H "x-api-key: your-api-key-here" \
+-d '{
+"sessionId": "test-session-123",
+"message": {
+```
+
+```
+JSON
+```
+```
+None
+```
+```
+"sender": "scammer",
+"text": "URGENT: Your SBI account has been compromised.
+Share OTP immediately.",
+"timestamp": "2025-02-11T10:30:00Z"
+},
+"conversationHistory": [],
+"metadata": {
+"channel": "SMS",
+"language": "English",
+"locale": "IN"
+}
+}'
+```
+Expected response:
+
+#### {
+
+```
+"reply": "I'm concerned about my account. Can you verify your
+identity first?"
+}
+```
+### Common Failure Scenarios
+
+1. **API Timeout** : Requests must complete within 30 seconds
+2. **Connection Error** : Ensure your endpoint is accessible
+3. **Invalid Response Format** : Must return JSON with reply/message/text field
+4. **Non-200 Status Code** : Always return 200 for successful processing
+
+### Authentication
+
+If you provide an api_key in your submission, requests will include:
+
+```
+Headers:
+Content-Type: application/json
+```
+
+```
+x-api-key: your-api-key-here
+```
+## Fake Data Reference
+
+⚠ **Important** : The examples below are for **illustration purposes only**. Actual test scenarios
+will use different data.
+
+**During testing, scammers will use pre-configured fake data similar to these examples:**
+
+### Example: Bank Fraud Scenario
+
+```
+● Bank Account: 1234567890123456
+● UPI ID: scammer.fraud@fakebank
+● Phone: +91-9876543210
+```
+### Example: UPI Fraud Scenario
+
+```
+● UPI ID: cashback.scam@fakeupi
+● Phone: +91-8765432109
+```
+### Example: Phishing Scenario
+
+```
+● Link: http://amaz0n-deals.fake-site.com/claim?id=12345
+● Email: offers@fake-amazon-deals.com
+```
+**Your Goal** :
+
+```
+● Extract any intelligence shared by the scammer during conversation
+● Don't rely on these specific examples - actual test data will be different
+● Build generic extraction logic that works for any phone number, account, URL, etc.
+● Include extracted data in the appropriate fields of your final output
+```
+**What to Extract:**
+
+```
+● 📞 Phone numbers (any format)
+● 🏦 Bank account numbers
+● 💳 UPI IDs
+● 🔗 Suspicious URLs/links
+● 📧 Email addresses
+```
+
+```
+● 🆔 Any other identifying information
+```
+## Tips for Success
+
+1. **Build Generic Detection Logic** : Don't hardcode responses for specific scenarios - your
+    system should detect scams based on patterns, keywords, and behavior
+2. **Ask Identifying Questions** : Request phone numbers, account details, verification
+    codes to extract intelligence
+3. **Maintain Engagement** : Keep the scammer talking for longer conversations to maximize
+    engagement score
+4. **Extract All Intelligence** : Capture every piece of information shared (numbers, emails,
+    links, IDs)
+5. **Proper Structure** : Follow the exact JSON format for final output
+6. **Handle Edge Cases** : Be prepared for various scammer tactics and responses across
+    different fraud types
+7. **Use AI/LLM Wisely** : Leverage language models for natural conversation, not for
+    hardcoded test detection
+8. **Test Thoroughly** : Use the self-test scripts to validate your implementation before
+    submission
+9. **Document Your Approach** : Clear README helps in code review if your submission is
+    selected
+10. **Think Like a Real Honeypot** : Your goal is to waste scammer time, extract data, and
+    detect fraud - not to ace a specific test
+
+## Evaluation Timeline
+
+1. **Conversation Phase** : Up to 10 turns (approximately 2-5 minutes)
+2. **Final Output Wait** : System waits 10 seconds for your final submission
+3. **Scoring** : Automated evaluation runs immediately after
+4. **Results** : Available in the session log and leaderboard
+
+## Submission Requirements
+
+### What to Submit
+
+Your submission must include:
+
+1. **Deployed Endpoint URL**
+
+```
+○ A publicly accessible HTTPS endpoint
+○ Example: https://your-api.herokuapp.com/honeypot
+```
+
+```
+None
+```
+```
+None
+```
+2. **API Key** (Optional)
+
+```
+○ If your endpoint requires authentication
+○ Will be sent as x-api-key header
+```
+3. **GitHub Repository URL** ⭐ **REQUIRED**
+
+```
+○ Public repository containing your complete source code
+○ Must include:
+■ Implementation code
+■ README.md with setup instructions
+■ Requirements/dependencies file (requirements.txt, package.json, etc.)
+■ API documentation
+○ Example: https://github.com/username/honeypot-api
+```
+### GitHub Repository Requirements
+
+Your repository should include:
+
+```
+your-repo/
+├── README.md # Setup and usage instructions
+├── src/ # Source code
+│ ├── main.py # Main API implementation
+│ ├── honeypot_agent.py # Honeypot logic
+│ └── ...
+├── requirements.txt # Python dependencies
+├── package.json # Node.js dependencies (if
+applicable)
+├── .env.example # Environment variables template
+└── docs/ # Additional documentation
+(optional)
+└── architecture.md
+```
+**Minimum README Content:**
+
+```
+# Honeypot API
+```
+
+```
+## Description
+Brief description of your approach and strategy
+```
+```
+## Tech Stack
+```
+- Language/Framework
+- Key libraries
+- LLM/AI models used (if any)
+
+```
+## Setup Instructions
+```
+1. Clone the repository
+2. Install dependencies
+3. Set environment variables
+4. Run the application
+
+```
+## API Endpoint
+```
+- URL: https://your-deployed-url.com/honeypot
+- Method: POST
+- Authentication: x-api-key header
+
+```
+## Approach
+Explain your honeypot strategy:
+```
+- How you detect scams
+- How you extract intelligence
+- How you maintain engagement
+
+### Code Review Policy
+
+⚠ **Important** : In certain cases, we will **manually review your GitHub code** in addition to
+automated testing:
+
+**Code review will be conducted when:**
+
+1. **High Scores with Suspicious Patterns**
+
+```
+○ Scores above 95% on all scenarios
+○ Perfect intelligence extraction without realistic conversation flow
+○ Identical responses across different scenarios
+```
+
+```
+Python
+```
+2. **Anomalous API Behavior**
+
+```
+○ Extremely fast responses (<100ms) with complex outputs
+○ Inconsistent behavior across test runs
+○ Response patterns that suggest hardcoded answers
+```
+3. **Random Audit**
+
+```
+○ A random sample of submissions (approximately 10-15%)
+○ To ensure fairness and maintain competition integrity
+```
+4. **Edge Cases or Disputes**
+
+```
+○ When automated scoring produces unexpected results
+○ If participants contest their scores
+```
+**What We Look For in Code Review:**
+
+✅ **Acceptable Practices:**
+
+```
+● Using LLMs/AI models for conversation and analysis
+● Rule-based pattern matching for scam detection
+● Natural language processing for intelligence extraction
+● Database or state management for context tracking
+● Third-party APIs for enhanced detection
+```
+❌ **Unacceptable Practices:**
+
+```
+● Hardcoded responses specific to test scenarios
+● Detecting and responding differently to evaluation traffic
+● Pre-mapped answers based on known test data
+● Bypassing actual scam detection with test-specific logic
+● Any form of evaluation system exploitation
+```
+**Code Review Impact:**
+
+```
+● ✅ Passes Review : Score remains unchanged, submission valid
+● ⚠ Minor Issues : Warning issued, score may be adjusted
+● ❌ Fails Review : Disqualification from hackathon, score set to 0
+```
+**Example of Prohibited Code:**
+
+```
+# ❌ WRONG - Hardcoded test detection
+```
+
+```
+Python
+```
+```
+JSON
+```
+```
+if "SBI account has been compromised" in message:
+return {
+"reply": "Can you provide your employee ID?",
+"scamDetected": True,
+"extractedIntelligence": {
+"phoneNumbers": ["+91-9876543210"] # Pre-known test
+data
+}
+}
+```
+**Example of Acceptable Code:**
+
+```
+# ✅ CORRECT - Generic scam detection
+scam_keywords = ["urgent", "blocked", "verify", "OTP", "account
+compromised"]
+if any(keyword.lower() in message.lower() for keyword in
+scam_keywords):
+scam_score += 0.2
+```
+```
+# Use AI/LLM for intelligent response
+response = llm.generate_response(conversation_history, message)
+```
+```
+# Extract entities using NLP
+extracted_data = extract_entities(message, conversation_history)
+```
+### Submission Format
+
+Submit your details in the following format:
+
+#### {
+
+```
+"deployed_url": "https://your-api-endpoint.com/honeypot",
+"api_key": "your-api-key-here",
+```
+
+```
+"github_url": "https://github.com/username/honeypot-api"
+}
+```
+Or via the submission form:
+
+```
+Field Value
+```
+Deployed URL (^) https://your-api-endpoint.com/ho
+neypot
+API Key (^) your-api-key-here (optional)
+GitHub URL (^) https://github.com/username/hone
+ypot-api
+⚠ **Incomplete Submissions** : Submissions without a valid GitHub URL will be **automatically
+rejected**.
+
+## Support
+
+If your API fails evaluation:
+
+```
+● Check the honeyPotTestingSessionLog collection for detailed error messages
+● Review the conversationHistory to see the exact exchange
+● Verify your endpoint is accessible and returning proper responses
+● Ensure response times are under 30 seconds
+● Ensure your GitHub repository is public and accessible
+● Verify your code follows acceptable practices (no hardcoded test responses)
+```
+### FAQs
+
+**Q: Can I use third-party AI APIs (OpenAI, Anthropic, etc.)?**
+A: Yes, absolutely! Using LLMs for conversation and analysis is encouraged.
+
+**Q: Can I use pre-trained models for scam detection?**
+A: Yes, using existing ML models or training your own is acceptable.
+
+**Q: What if my repository has sensitive API keys?**
+A: Use environment variables and include a .env.example file. Never commit actual keys.
+
+
+**Q: Can I make my repository private after submission?**
+A: No, keep it public until evaluation is complete and results are announced.
+
+**Q: How do I know if my code will be reviewed?**
+A: You won't know in advance. Assume all submissions may be reviewed. Write clean, honest
+code.
+
+**Q: What if I used a framework or boilerplate code?**
+A: That's fine! Just document it in your README and ensure your core logic is original.
+
+**Good luck with your submission!** The evaluation system is designed to test real-world
+honeypot capabilities in a fair and standardized manner. Remember: creativity in approach is
+valued, but integrity in implementation is required.
+
+
