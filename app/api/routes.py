@@ -36,19 +36,21 @@ router = APIRouter()
 session_manager = SessionManager()
 groq_client = GroqClient()
 
+#TODO:
 # Initialize agent - RAG-enhanced if functional, else fallback to optimized
-_rag_agent = None
-if is_rag_functional():
-    try:
-        from app.agents.rag_conversation_manager import RAGEnhancedConversationManager
-        qdrant_client = get_qdrant_client()
-        if qdrant_client:
-            _rag_agent = RAGEnhancedConversationManager(groq_client, qdrant_client)
-            logger.info("✓ Using RAG-enhanced agent")
-    except Exception as e:
-        logger.warning(f"RAG agent initialization failed: {e}")
+# RAG disabled to reduce response time per user request
+# _rag_agent = None
+# if is_rag_functional():
+#     try:
+#         from app.agents.rag_conversation_manager import RAGEnhancedConversationManager
+#         qdrant_client = get_qdrant_client()
+#         if qdrant_client:
+#             _rag_agent = RAGEnhancedConversationManager(groq_client, qdrant_client)
+#             logger.info("✓ Using RAG-enhanced agent")
+#     except Exception as e:
+#         logger.warning(f"RAG agent initialization failed: {e}")
 
-optimized_agent = _rag_agent or OptimizedAgent(groq_client)
+optimized_agent = OptimizedAgent(groq_client)
 intelligence_extractor = IntelligenceExtractor(groq_client)  # For scoring only
 guvi_callback = GUVICallback()
 
@@ -120,6 +122,44 @@ def _record_tactic_outcome(session: Dict, got_new_intel: bool):
     session["strategy_state"] = strategy_state
 
 
+
+def _build_error_response(reply: str, session: Dict = None) -> ChatResponse:
+    """Build error response with all evaluator-scored fields."""
+    engagement_metrics = {"totalMessagesExchanged": 0, "engagementDurationSeconds": 0}
+    extracted_intelligence = {
+        "bankAccounts": [], "upiIds": [], "phoneNumbers": [],
+        "phishingLinks": [], "emailAddresses": [],
+    }
+    scam_detected = False
+
+    if session:
+        scam_detected = session.get("scam_detected", False)
+        start = session.get("session_start_time", session.get("created_at", datetime.now()))
+        duration = (datetime.now() - start).total_seconds()
+        engagement_metrics = {
+            "totalMessagesExchanged": session.get("message_count", 0),
+            "engagementDurationSeconds": round(duration, 2),
+        }
+        intel = session.get("intelligence", {})
+        extracted_intelligence = {
+            "bankAccounts": intel.get("bank_accounts", []),
+            "upiIds": intel.get("upi_ids", []),
+            "phoneNumbers": intel.get("phone_numbers", []),
+            "phishingLinks": intel.get("phishing_links", []),
+            "emailAddresses": intel.get("email_addresses", []),
+        }
+
+    return ChatResponse(
+        status="success",
+        reply=reply,
+        response=reply,
+        scamDetected=scam_detected,
+        extractedIntelligence=extracted_intelligence,
+        engagementMetrics=engagement_metrics,
+        agentNotes="Error occurred during processing",
+    )
+
+
 @router.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(
     request: ChatRequest,
@@ -171,6 +211,12 @@ async def chat_endpoint(
             got_new = _merge_intelligence(session, result.get("intel", {}))
             _record_tactic_outcome(session, got_new)
 
+        # 4a. Scan incoming conversationHistory for missed intelligence
+        for hist_msg in (request.conversationHistory or []):
+            if hist_msg.sender == "scammer":
+                hist_intel = intelligence_extractor._regex_extraction(hist_msg.text)
+                _merge_intelligence(session, hist_intel)
+
         reply = result.get("response", "I don't understand. Can you explain?")
 
         # Ensure reply is a clean string (not raw JSON)
@@ -186,7 +232,7 @@ async def chat_endpoint(
                     else:
                         reply = str(parsed)
                 except (json.JSONDecodeError, ValueError):
-                    pass  # Keep the original string if it's not valid JSON
+                    pass
         if not isinstance(reply, str):
             reply = str(reply)
 
@@ -215,27 +261,51 @@ async def chat_endpoint(
         if should_end and session["scam_detected"] and not session.get("callback_sent"):
             await _send_callback(request.sessionId, session, intel_score)
 
-        return ChatResponse(status="success", reply=reply, response=reply)
+        # 7. Build response with ALL evaluator-scored fields
+        engagement_metrics = session_manager.get_engagement_metrics(session)
+        extracted_intelligence = {
+            "bankAccounts": session["intelligence"].get("bank_accounts", []),
+            "upiIds": session["intelligence"].get("upi_ids", []),
+            "phoneNumbers": session["intelligence"].get("phone_numbers", []),
+            "phishingLinks": session["intelligence"].get("phishing_links", []),
+            "emailAddresses": session["intelligence"].get("email_addresses", []),
+        }
+        agent_notes = guvi_callback.build_agent_notes(
+            scam_type=session.get("scam_type", "unknown"),
+            persona=session.get("persona", "unknown"),
+            confidence=session.get("scam_confidence", 0.0),
+            intel_score=intel_score,
+        )
+
+        return ChatResponse(
+            status="success",
+            reply=reply,
+            response=reply,
+            scamDetected=session.get("scam_detected", False),
+            extractedIntelligence=extracted_intelligence,
+            engagementMetrics=engagement_metrics,
+            agentNotes=agent_notes,
+        )
 
     except json.JSONDecodeError as e:
         logger.warning(f"JSON parse error in chat processing: {e}")
         error_reply = "I'm sorry, I didn't understand. Can you explain again?"
-        return ChatResponse(status="success", reply=error_reply, response=error_reply)
+        return _build_error_response(error_reply, session if 'session' in dir() else None)
 
     except asyncio.TimeoutError:
         logger.error("LLM request timed out")
         error_reply = "Sorry, I'm having trouble right now. Can you say that again?"
-        return ChatResponse(status="success", reply=error_reply, response=error_reply)
+        return _build_error_response(error_reply, session if 'session' in dir() else None)
 
     except ValueError as e:
         logger.warning(f"Validation error: {e}")
         error_reply = "I'm sorry, I didn't understand. Can you explain again?"
-        return ChatResponse(status="success", reply=error_reply, response=error_reply)
+        return _build_error_response(error_reply, session if 'session' in dir() else None)
 
     except Exception as e:
         logger.error(f"Unexpected error ({type(e).__name__}): {str(e)}", exc_info=True)
         error_reply = "I'm sorry, I didn't understand. Can you explain again?"
-        return ChatResponse(status="success", reply=error_reply, response=error_reply)
+        return _build_error_response(error_reply, session if 'session' in dir() else None)
 
 
 async def _send_callback(session_id: str, session: Dict, intel_score: float):

@@ -355,12 +355,20 @@ def _fallback_response(message: str, persona: str, msg_count: int) -> Dict:
         and u.lower() not in email_lower_set
     ]
 
-    # Phone numbers: handle +91, country codes, dashes, spaces
-    phone_patterns = (
-        re.findall(r'(?:\+91[\s\-]?)?[6-9]\d{9}', message)
-        + re.findall(r'\+91[\s\-]?\d{10}', message)
+    # Phone numbers: handle +91, country codes, dashes, spaces - preserve original format
+    phone_patterns_raw = (
+        re.findall(r'\+91[\s\-]?\d{10}', message)
+        + re.findall(r'\+91[\s\-]?[6-9]\d{9}', message)
+        + re.findall(r'(?<!\d)[6-9]\d{9}(?!\d)', message)
     )
-    phones = list(set(p.replace(" ", "").replace("-", "") for p in phone_patterns))
+    phones = []
+    for p in phone_patterns_raw:
+        cleaned = p.strip()
+        phones.append(cleaned)
+        digits_only = re.sub(r'[\s\-\+]', '', cleaned)[-10:]
+        if digits_only != cleaned:
+            phones.append(digits_only)
+    phones = list(set(phones))
 
     # Bank accounts: 9 to 18 digits
     bank_accounts = re.findall(r'\b\d{9,18}\b', message)

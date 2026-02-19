@@ -96,7 +96,11 @@ class ChatResponse(BaseModel):
 
     status: str = Field(..., description="Response status: 'success' or 'error'")
     reply: str = Field(..., description="Agent's reply message")
-    response: str = Field(..., description="Alias for reply for compatibility")
+    response: Optional[str] = Field(default=None, description="Alias for reply for compatibility")
+    scamDetected: bool = Field(default=False, description="Whether scam was detected")
+    extractedIntelligence: Optional[dict] = Field(default=None, description="Extracted intelligence data")
+    engagementMetrics: Optional[dict] = Field(default=None, description="Engagement metrics for scoring")
+    agentNotes: Optional[str] = Field(default=None, description="Agent analysis notes")
 
 
 class HealthResponse(BaseModel):

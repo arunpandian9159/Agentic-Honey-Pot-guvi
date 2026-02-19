@@ -82,22 +82,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# Lazy RAG initialization middleware
-@app.middleware("http")
-async def init_rag_on_first_request(request: Request, call_next):
-    """Lazy initialize RAG on first request to reduce startup time."""
-    if not hasattr(app.state, 'rag_initialized'):
-        from app.core.rag_config import is_rag_enabled, initialize_collections
-        if is_rag_enabled():
-            if initialize_collections():
-                logger.info("✓ RAG initialized (lazy)")
-            else:
-                logger.warning("RAG init failed — continuing without RAG")
-        else:
-            logger.info("RAG disabled (QDRANT credentials not set)")
-        app.state.rag_initialized = True
-    return await call_next(request)
+#TODO:
+# RAG initialization middleware disabled to reduce response time
+# @app.middleware("http")
+# async def init_rag_on_first_request(request: Request, call_next):
+#     """Lazy initialize RAG on first request to reduce startup time."""
+#     if not hasattr(app.state, 'rag_initialized'):
+#         from app.core.rag_config import is_rag_enabled, initialize_collections
+#         if is_rag_enabled():
+#             if initialize_collections():
+#                 logger.info("✓ RAG initialized (lazy)")
+#             else:
+#                 logger.warning("RAG init failed — continuing without RAG")
+#         else:
+#             logger.info("RAG disabled (QDRANT credentials not set)")
+#         app.state.rag_initialized = True
+#     return await call_next(request)
 
 
 # Include API routes

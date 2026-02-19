@@ -97,14 +97,17 @@ Examples:
             if key not in llm_result:
                 llm_result[key] = []
         
-        # Phone number patterns (Indian)
-        phone_pattern = r'(?:\+91[\s\-]?)?[6-9]\d{9}'
+        # Phone number patterns (Indian) - preserve original format for evaluator matching
+        phone_pattern = r'(\+91[\s\-]?\d{10}|\+91[\s\-]?[6-9]\d{9}|(?<!\d)[6-9]\d{9}(?!\d))'
         phones = re.findall(phone_pattern, message)
-        clean_phones = [
-            re.sub(r'[\s\-\+]', '', p)[-10:]
-            for p in phones
-            if len(re.sub(r'[\s\-\+]', '', p)) >= 10
-        ]
+        clean_phones = []
+        for p in phones:
+            cleaned = p.strip()
+            clean_phones.append(cleaned)
+            # Also add normalized 10-digit version for broader matching
+            digits_only = re.sub(r'[\s\-\+]', '', cleaned)[-10:]
+            if digits_only != cleaned:
+                clean_phones.append(digits_only)
         llm_result["phone_numbers"].extend(clean_phones)
         
         # Email address pattern
