@@ -101,6 +101,8 @@ class ChatResponse(BaseModel):
     extractedIntelligence: Optional[dict] = Field(default=None, description="Extracted intelligence data")
     engagementMetrics: Optional[dict] = Field(default=None, description="Engagement metrics for scoring")
     agentNotes: Optional[str] = Field(default=None, description="Agent analysis notes")
+    scamType: Optional[str] = Field(default=None, description="Type of scam detected")
+    confidenceLevel: Optional[float] = Field(default=None, description="Detection confidence 0-1")
 
 
 class HealthResponse(BaseModel):

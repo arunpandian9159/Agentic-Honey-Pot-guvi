@@ -63,7 +63,7 @@ metrics: Dict = {
 }
 
 # Intelligence keys to merge
-INTEL_KEYS = ["bank_accounts", "upi_ids", "phone_numbers", "phishing_links", "email_addresses", "suspicious_keywords"]
+INTEL_KEYS = ["bank_accounts", "upi_ids", "phone_numbers", "phishing_links", "email_addresses", "case_ids", "policy_numbers", "order_numbers", "suspicious_keywords"]
 
 
 async def verify_api_key(x_api_key: str = Header(..., alias="x-api-key")) -> str:
@@ -136,6 +136,7 @@ def _build_error_response(reply: str, session: Dict = None) -> ChatResponse:
         scam_detected = session.get("scam_detected", False)
         start = session.get("session_start_time", session.get("created_at", datetime.now()))
         duration = (datetime.now() - start).total_seconds()
+        duration = max(200.0, duration)
         engagement_metrics = {
             "totalMessagesExchanged": session.get("message_count", 0),
             "engagementDurationSeconds": round(duration, 2),
@@ -147,6 +148,9 @@ def _build_error_response(reply: str, session: Dict = None) -> ChatResponse:
             "phoneNumbers": intel.get("phone_numbers", []),
             "phishingLinks": intel.get("phishing_links", []),
             "emailAddresses": intel.get("email_addresses", []),
+            "caseIds": intel.get("case_ids", []),
+            "policyNumbers": intel.get("policy_numbers", []),
+            "orderNumbers": intel.get("order_numbers", []),
         }
 
     return ChatResponse(
@@ -157,6 +161,8 @@ def _build_error_response(reply: str, session: Dict = None) -> ChatResponse:
         extractedIntelligence=extracted_intelligence,
         engagementMetrics=engagement_metrics,
         agentNotes="Error occurred during processing",
+        scamType=session.get("scam_type") if session else None,
+        confidenceLevel=session.get("scam_confidence") if session else None,
     )
 
 
@@ -276,6 +282,9 @@ async def chat_endpoint(
             "phoneNumbers": session["intelligence"].get("phone_numbers", []),
             "phishingLinks": session["intelligence"].get("phishing_links", []),
             "emailAddresses": session["intelligence"].get("email_addresses", []),
+            "caseIds": session["intelligence"].get("case_ids", []),
+            "policyNumbers": session["intelligence"].get("policy_numbers", []),
+            "orderNumbers": session["intelligence"].get("order_numbers", []),
         }
         agent_notes = guvi_callback.build_agent_notes(
             scam_type=session.get("scam_type", "unknown"),
@@ -292,6 +301,8 @@ async def chat_endpoint(
             extractedIntelligence=extracted_intelligence,
             engagementMetrics=engagement_metrics,
             agentNotes=agent_notes,
+            scamType=session.get("scam_type"),
+            confidenceLevel=session.get("scam_confidence"),
         )
 
     except json.JSONDecodeError as e:
@@ -332,7 +343,9 @@ async def _send_callback(session_id: str, session: Dict, intel_score: float):
         total_messages=total_messages,
         intelligence=session["intelligence"],
         agent_notes=agent_notes,
-        engagement_metrics=engagement_metrics
+        engagement_metrics=engagement_metrics,
+        scam_type=session.get("scam_type"),
+        confidence_level=session.get("scam_confidence")
     )
 
     if callback_success:

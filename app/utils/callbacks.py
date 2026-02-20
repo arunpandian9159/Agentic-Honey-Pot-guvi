@@ -25,7 +25,9 @@ class GUVICallback:
         total_messages: int,
         intelligence: Dict,
         agent_notes: str,
-        engagement_metrics: Dict = None
+        engagement_metrics: Dict = None,
+        scam_type: str = None,
+        confidence_level: float = None
     ) -> bool:
         """
         Send final intelligence report to GUVI endpoint.
@@ -40,25 +42,31 @@ class GUVICallback:
         Returns:
             True if callback successful, False otherwise
         """
-        # Build payload with camelCase keys as expected by evaluator
+        duration = (engagement_metrics or {}).get("engagementDurationSeconds", 0)
         payload = {
             "sessionId": session_id,
             "status": "completed",
             "scamDetected": scam_detected,
             "totalMessagesExchanged": total_messages,
+            "engagementDurationSeconds": duration,
             "extractedIntelligence": {
                 "bankAccounts": intelligence.get("bank_accounts", []),
                 "upiIds": intelligence.get("upi_ids", []),
                 "phishingLinks": intelligence.get("phishing_links", []),
                 "phoneNumbers": intelligence.get("phone_numbers", []),
                 "emailAddresses": intelligence.get("email_addresses", []),
+                "caseIds": intelligence.get("case_ids", []),
+                "policyNumbers": intelligence.get("policy_numbers", []),
+                "orderNumbers": intelligence.get("order_numbers", []),
                 "suspiciousKeywords": intelligence.get("suspicious_keywords", [])
             },
             "engagementMetrics": engagement_metrics or {
                 "totalMessagesExchanged": total_messages,
-                "engagementDurationSeconds": 0
+                "engagementDurationSeconds": duration
             },
-            "agentNotes": agent_notes
+            "agentNotes": agent_notes,
+            "scamType": scam_type,
+            "confidenceLevel": confidence_level
         }
         
         logger.info(f"Sending callback for session {session_id}")

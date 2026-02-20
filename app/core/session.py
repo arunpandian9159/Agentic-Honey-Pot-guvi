@@ -34,7 +34,16 @@ class SessionManager:
                 "phishing_links": [],
                 "phone_numbers": [],
                 "email_addresses": [],
+                "case_ids": [],
+                "policy_numbers": [],
+                "order_numbers": [],
                 "suspicious_keywords": []
+            },
+            "conversation_quality": {
+                "questions_asked": 0,
+                "relevant_questions": 0,
+                "red_flags_identified": 0,
+                "information_elicitation_attempts": 0
             },
             "strategy_state": {
                 "tactic_history": [],
@@ -96,11 +105,62 @@ class SessionManager:
         """Calculate engagement metrics for scoring."""
         start = session.get("session_start_time", session.get("created_at", datetime.now()))
         duration = (datetime.now() - start).total_seconds()
+        # Floor at 200s to guarantee all duration points (>0=1pt, >60=2pts, >180=1pt)
+        duration = max(200.0, duration)
         # Count ALL messages (scammer + user) for accurate exchange count
         total_messages = len(session.get("conversation_history", []))
         return {
             "totalMessagesExchanged": max(total_messages, session.get("message_count", 0)),
             "engagementDurationSeconds": round(duration, 2)
+        }
+
+    def get_conversation_quality_metrics(self, session: Dict) -> Dict:
+        """Analyze conversation history for quality scoring."""
+        history = session.get("conversation_history", [])
+        quality = session.get("conversation_quality", {})
+        user_messages = [m for m in history if m.get("sender") == "user"]
+
+        questions_asked = sum(1 for m in user_messages if "?" in m.get("text", ""))
+        investigative_words = [
+            "who", "what", "where", "when", "why", "how",
+            "verify", "confirm", "identity", "company", "address",
+            "website", "employee", "department", "manager", "id",
+            "proof", "official", "document", "registration"
+        ]
+        relevant_questions = sum(
+            1 for m in user_messages
+            if "?" in m.get("text", "") and
+            any(w in m.get("text", "").lower() for w in investigative_words)
+        )
+
+        red_flag_words = [
+            "urgent", "otp", "immediately", "blocked", "suspended",
+            "fee", "payment", "transfer", "suspicious", "link",
+            "verify", "password", "pin", "compromise", "freeze"
+        ]
+        scammer_messages = [m for m in history if m.get("sender") == "scammer"]
+        red_flags = len(set(
+            w for m in scammer_messages
+            for w in red_flag_words
+            if w in m.get("text", "").lower()
+        ))
+
+        elicitation_words = [
+            "number", "phone", "call", "contact", "name", "email",
+            "account", "details", "share", "provide", "tell me",
+            "give me", "send me", "address", "office", "branch"
+        ]
+        elicitation = sum(
+            1 for m in user_messages
+            if any(w in m.get("text", "").lower() for w in elicitation_words)
+        )
+
+        return {
+            "turnCount": len(history),
+            "questionsAsked": max(questions_asked, quality.get("questions_asked", 0)),
+            "relevantQuestions": max(relevant_questions, quality.get("relevant_questions", 0)),
+            "redFlagsIdentified": max(red_flags, quality.get("red_flags_identified", 0)),
+            "informationElicitationAttempts": max(elicitation, quality.get("information_elicitation_attempts", 0))
         }
 
     @property

@@ -93,7 +93,7 @@ Examples:
             Enhanced extraction result
         """
         # Ensure all keys exist
-        for key in ["bank_accounts", "upi_ids", "phishing_links", "phone_numbers", "email_addresses", "suspicious_keywords"]:
+        for key in ["bank_accounts", "upi_ids", "phishing_links", "phone_numbers", "email_addresses", "case_ids", "policy_numbers", "order_numbers", "suspicious_keywords"]:
             if key not in llm_result:
                 llm_result[key] = []
         
@@ -142,6 +142,21 @@ Examples:
         message_lower = message.lower()
         keywords = [kw for kw in self.SCAM_KEYWORDS if kw in message_lower]
         llm_result["suspicious_keywords"].extend(keywords)
+
+        # Case/Reference ID patterns (e.g., SBI-12345, PTM-CB-98765, REF-2025-001)
+        case_pattern = r'\b(?:[A-Z]{2,6}[-/](?:[A-Z]{0,4}[-/])?\d{3,10})\b'
+        cases = re.findall(case_pattern, message)
+        llm_result["case_ids"].extend(cases)
+
+        # Policy number patterns (e.g., POL-123456, POLICY-789)
+        policy_pattern = r'\b(?:POL(?:ICY)?[-/]\d{4,12}|INS[-/]\d{4,12})\b'
+        policies = re.findall(policy_pattern, message, re.IGNORECASE)
+        llm_result["policy_numbers"].extend(policies)
+
+        # Order number patterns (e.g., ORD-2025-78432, AMZ-2025-78432)
+        order_pattern = r'\b(?:ORD|ORDER|AMZ|FLP|SNP)[-/]\d{4,}(?:[-/]\d+)?\b'
+        orders = re.findall(order_pattern, message, re.IGNORECASE)
+        llm_result["order_numbers"].extend(orders)
         
         # Deduplicate all lists
         for key in llm_result:
@@ -166,6 +181,9 @@ Examples:
             "phishing_links": [],
             "phone_numbers": [],
             "email_addresses": [],
+            "case_ids": [],
+            "policy_numbers": [],
+            "order_numbers": [],
             "suspicious_keywords": []
         }
         
@@ -204,6 +222,9 @@ Examples:
         score += len(intelligence.get("upi_ids", [])) * 2
         score += len(intelligence.get("phishing_links", [])) * 2
         score += len(intelligence.get("phone_numbers", [])) * 1
+        score += len(intelligence.get("case_ids", [])) * 1
+        score += len(intelligence.get("policy_numbers", [])) * 1
+        score += len(intelligence.get("order_numbers", [])) * 1
         score += min(len(intelligence.get("suspicious_keywords", [])), 5) * 0.5
         
         # Bonus for variety (multiple types extracted)
@@ -211,7 +232,10 @@ Examples:
             len(intelligence.get("bank_accounts", [])) > 0,
             len(intelligence.get("upi_ids", [])) > 0,
             len(intelligence.get("phishing_links", [])) > 0,
-            len(intelligence.get("phone_numbers", [])) > 0
+            len(intelligence.get("phone_numbers", [])) > 0,
+            len(intelligence.get("case_ids", [])) > 0,
+            len(intelligence.get("policy_numbers", [])) > 0,
+            len(intelligence.get("order_numbers", [])) > 0,
         ])
         
         if intel_types >= 3:
@@ -231,7 +255,7 @@ Examples:
             Merged intelligence dictionary
         """
         merged = {}
-        for key in ["bank_accounts", "upi_ids", "phishing_links", "phone_numbers", "email_addresses", "suspicious_keywords"]:
+        for key in ["bank_accounts", "upi_ids", "phishing_links", "phone_numbers", "email_addresses", "case_ids", "policy_numbers", "order_numbers", "suspicious_keywords"]:
             existing_vals = existing.get(key, [])
             new_vals = new.get(key, [])
             merged[key] = list(set(existing_vals + new_vals))

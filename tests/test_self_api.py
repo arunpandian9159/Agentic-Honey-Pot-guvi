@@ -158,6 +158,9 @@ KEY_MAPPING = {
     "phoneNumber": "phoneNumbers",
     "phishingLink": "phishingLinks",
     "emailAddress": "emailAddresses",
+    "caseId": "caseIds",
+    "policyNumber": "policyNumbers",
+    "orderNumber": "orderNumbers",
 }
 
 
@@ -168,10 +171,11 @@ def evaluate_final_output(
     scenario: dict,
     conversation_history: list,
 ) -> dict:
-    """Score the final output using the same rubric as the GUVI evaluator."""
+    """Score the final output using the NEW 5-category rubric."""
     score = {
         "scamDetection": 0,
         "intelligenceExtraction": 0,
+        "conversationQuality": 0,
         "engagementQuality": 0,
         "responseStructure": 0,
         "total": 0,
@@ -181,9 +185,11 @@ def evaluate_final_output(
     if final_output.get("scamDetected", False):
         score["scamDetection"] = 20
 
-    # 2. Intelligence Extraction (40 pts)
+    # 2. Intelligence Extraction (30 pts — dynamic: 30 / total_fake_fields per item)
     extracted = final_output.get("extractedIntelligence", {})
     fake_data = scenario.get("fakeData", {})
+    total_fake_fields = len(fake_data) if fake_data else 1
+    points_per_item = 30.0 / total_fake_fields
 
     for fake_key, fake_value in fake_data.items():
         output_key = KEY_MAPPING.get(fake_key, fake_key)
@@ -191,47 +197,137 @@ def evaluate_final_output(
 
         if isinstance(extracted_values, list):
             if any(fake_value in str(v) for v in extracted_values):
-                score["intelligenceExtraction"] += 10
+                score["intelligenceExtraction"] += points_per_item
         elif isinstance(extracted_values, str):
             if fake_value in extracted_values:
-                score["intelligenceExtraction"] += 10
+                score["intelligenceExtraction"] += points_per_item
 
-    score["intelligenceExtraction"] = min(score["intelligenceExtraction"], 40)
+    score["intelligenceExtraction"] = min(score["intelligenceExtraction"], 30)
 
-    # 3. Engagement Quality (20 pts)
+    # 3. Conversation Quality (30 pts)
+    turns = len(conversation_history)
+    user_messages = [m for m in conversation_history if m.get("sender") == "user"]
+
+    # Turn Count (8 pts)
+    if turns >= 16:  # 8+ exchanges = 16+ messages (scammer+user)
+        score["conversationQuality"] += 8
+    elif turns >= 12:
+        score["conversationQuality"] += 6
+    elif turns >= 8:
+        score["conversationQuality"] += 3
+
+    # Questions Asked (4 pts)
+    questions_asked = sum(1 for m in user_messages if "?" in m.get("text", ""))
+    if questions_asked >= 5:
+        score["conversationQuality"] += 4
+    elif questions_asked >= 3:
+        score["conversationQuality"] += 2
+    elif questions_asked >= 1:
+        score["conversationQuality"] += 1
+
+    # Relevant/Investigative Questions (3 pts)
+    investigative_words = [
+        "who", "what", "where", "when", "why", "how",
+        "verify", "confirm", "identity", "company", "address",
+        "website", "employee", "department", "id", "proof"
+    ]
+    relevant_q = sum(
+        1 for m in user_messages
+        if "?" in m.get("text", "") and
+        any(w in m.get("text", "").lower() for w in investigative_words)
+    )
+    if relevant_q >= 3:
+        score["conversationQuality"] += 3
+    elif relevant_q >= 2:
+        score["conversationQuality"] += 2
+    elif relevant_q >= 1:
+        score["conversationQuality"] += 1
+
+    # Red Flag Identification (8 pts)
+    red_flag_words = [
+        "urgent", "otp", "immediately", "blocked", "suspended",
+        "fee", "payment", "transfer", "suspicious", "link",
+        "verify", "password", "pin", "compromise", "freeze"
+    ]
+    all_texts = " ".join(m.get("text", "").lower() for m in conversation_history)
+    flags_found = sum(1 for w in red_flag_words if w in all_texts)
+    if flags_found >= 5:
+        score["conversationQuality"] += 8
+    elif flags_found >= 3:
+        score["conversationQuality"] += 5
+    elif flags_found >= 1:
+        score["conversationQuality"] += 2
+
+    # Information Elicitation (7 pts, 1.5 per attempt, max 7)
+    elicitation_words = [
+        "number", "phone", "call", "name", "email",
+        "account", "details", "share", "provide", "tell me"
+    ]
+    elicitation_attempts = sum(
+        1 for m in user_messages
+        if any(w in m.get("text", "").lower() for w in elicitation_words)
+    )
+    score["conversationQuality"] += min(elicitation_attempts * 1.5, 7)
+
+    score["conversationQuality"] = min(score["conversationQuality"], 30)
+
+    # 4. Engagement Quality (10 pts)
     metrics = final_output.get("engagementMetrics", {})
     duration = metrics.get("engagementDurationSeconds", 0)
     messages = metrics.get("totalMessagesExchanged", 0)
 
     if duration > 0:
-        score["engagementQuality"] += 5
+        score["engagementQuality"] += 1
     if duration > 60:
-        score["engagementQuality"] += 5
+        score["engagementQuality"] += 2
+    if duration > 180:
+        score["engagementQuality"] += 1
     if messages > 0:
-        score["engagementQuality"] += 5
+        score["engagementQuality"] += 2
     if messages >= 5:
-        score["engagementQuality"] += 5
+        score["engagementQuality"] += 3
+    if messages >= 10:
+        score["engagementQuality"] += 1
 
-    # 4. Response Structure (20 pts)
-    required_fields = ["status", "scamDetected", "extractedIntelligence"]
-    optional_fields = ["engagementMetrics", "agentNotes"]
+    score["engagementQuality"] = min(score["engagementQuality"], 10)
 
-    for field in required_fields:
+    # 5. Response Structure (10 pts)
+    required_fields = {"sessionId": 2, "scamDetected": 2, "extractedIntelligence": 2}
+    optional_fields = {
+        "totalMessagesExchanged": 0.5,
+        "engagementDurationSeconds": 0.5,
+        "agentNotes": 1,
+        "scamType": 1,
+        "confidenceLevel": 1,
+    }
+
+    for field, pts in required_fields.items():
         if field in final_output:
-            score["responseStructure"] += 5
+            score["responseStructure"] += pts
+        else:
+            score["responseStructure"] -= 1  # -1 penalty for missing required
 
-    for field in optional_fields:
+    # Check engagementMetrics sub-fields
+    eng_metrics = final_output.get("engagementMetrics", {})
+    if "totalMessagesExchanged" in eng_metrics or "totalMessagesExchanged" in final_output:
+        score["responseStructure"] += 0.5
+    if "engagementDurationSeconds" in eng_metrics or "engagementDurationSeconds" in final_output:
+        score["responseStructure"] += 0.5
+
+    for field, pts in {"agentNotes": 1, "scamType": 1, "confidenceLevel": 1}.items():
         if field in final_output and final_output[field]:
-            score["responseStructure"] += 2.5
+            score["responseStructure"] += pts
 
-    score["responseStructure"] = min(score["responseStructure"], 20)
+    score["responseStructure"] = max(0, min(score["responseStructure"], 10))
 
     # Total
-    score["total"] = (
+    score["total"] = round(
         score["scamDetection"]
         + score["intelligenceExtraction"]
+        + score["conversationQuality"]
         + score["engagementQuality"]
-        + score["responseStructure"]
+        + score["responseStructure"],
+        1
     )
     return score
 
@@ -364,6 +460,9 @@ def run_scenario(
             "phoneNumbers": intel_data.get("phone_numbers", []),
             "phishingLinks": intel_data.get("phishing_links", []),
             "emailAddresses": intel_data.get("email_addresses", []),
+            "caseIds": intel_data.get("case_ids", []),
+            "policyNumbers": intel_data.get("policy_numbers", []),
+            "orderNumbers": intel_data.get("order_numbers", []),
         },
         "engagementMetrics": {
             "totalMessagesExchanged": total_messages,
@@ -371,6 +470,8 @@ def run_scenario(
         },
         "agentNotes": f"Self-test for scenario {scenario['scenarioId']}. "
                       f"Engaged for {total_messages} messages over {elapsed:.1f}s.",
+        "scamType": scenario.get("scamType"),
+        "confidenceLevel": 0.95,
     }
 
     # Score
@@ -380,12 +481,13 @@ def run_scenario(
         print(f"\n{'─' * 60}")
         print(f"  📊 Score Breakdown ({scenario['name']})")
         print(f"{'─' * 60}")
-        print(f"  Scam Detection        : {score['scamDetection']:5.1f} / 20")
-        print(f"  Intelligence Extraction: {score['intelligenceExtraction']:5.1f} / 40")
-        print(f"  Engagement Quality    : {score['engagementQuality']:5.1f} / 20")
-        print(f"  Response Structure    : {score['responseStructure']:5.1f} / 20")
+        print(f"  Scam Detection         : {score['scamDetection']:5.1f} / 20")
+        print(f"  Intelligence Extraction: {score['intelligenceExtraction']:5.1f} / 30")
+        print(f"  Conversation Quality   : {score['conversationQuality']:5.1f} / 30")
+        print(f"  Engagement Quality     : {score['engagementQuality']:5.1f} / 10")
+        print(f"  Response Structure     : {score['responseStructure']:5.1f} / 10")
         print(f"  ─────────────────────────────────")
-        print(f"  TOTAL                 : {score['total']:5.1f} / 100")
+        print(f"  TOTAL                  : {score['total']:5.1f} / 100")
         print(f"{'─' * 60}")
 
         if intel_data:
@@ -484,7 +586,8 @@ def main():
             f"  {emoji} {r['scenario']:<15} "
             f"│ {s['total']:5.1f}/100 "
             f"│ Det:{s['scamDetection']:2.0f}  Intel:{s['intelligenceExtraction']:2.0f}  "
-            f"Eng:{s['engagementQuality']:2.0f}  Struct:{s['responseStructure']:4.1f}"
+            f"Conv:{s['conversationQuality']:2.0f}  Eng:{s['engagementQuality']:2.0f}  "
+            f"Struct:{s['responseStructure']:4.1f}"
             f"{err_tag}"
         )
         total_score += s["total"]
